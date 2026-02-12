@@ -6,6 +6,7 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ClubModule } from './modules/club/club.module';
+import { CompetitionModule } from './modules/competition/competition.module';
 import { CountryModule } from './modules/country/country.module';
 import { FinanceModule } from './modules/finance/finance.module';
 import { InfrastructureModule } from './modules/infrastructure/infrastructure.module';
@@ -46,6 +47,7 @@ import { UserModule } from './modules/user/user.module';
     }),
     UserModule,
     SaveGameModule,
+    CompetitionModule,
     CountryModule,
     LeagueModule,
     ClubModule,

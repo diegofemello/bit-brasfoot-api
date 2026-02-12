@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { DashboardPage } from './features/game/pages/dashboard/dashboard.page';
+import { CompetitionsPage } from './features/game/pages/competitions/competitions.page';
 import { FinancesPage } from './features/game/pages/finances/finances.page';
 import { InfrastructurePage } from './features/game/pages/infrastructure/infrastructure.page';
 import { PlayerDetailPage } from './features/game/pages/player-detail/player-detail.page';
@@ -60,6 +61,10 @@ export const routes: Routes = [
   {
     path: 'transfers',
     component: TransfersPage,
+  },
+  {
+    path: 'competitions',
+    component: CompetitionsPage,
   },
   {
     path: '**',
