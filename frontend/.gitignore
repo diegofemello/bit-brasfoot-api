@@ -44,6 +44,11 @@ pnpm-debug.log
 testem.log
 /typings
 __screenshots__/
+playwright/
+playwright-report/
+test-results/
+.playwright/
+.playwright-mcp/
 
 # System files
 .DS_Store

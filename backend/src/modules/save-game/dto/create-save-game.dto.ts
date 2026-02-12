@@ -4,7 +4,7 @@ import {
   IsString,
   IsUUID,
   Length,
-  Min,,
+  Min,
 } from 'class-validator';
 
 export class CreateSaveGameDto {

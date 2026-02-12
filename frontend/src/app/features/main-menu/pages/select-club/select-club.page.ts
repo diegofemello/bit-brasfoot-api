@@ -215,8 +215,9 @@ export class SelectClubPage {
     }
 
     if (!saveName) {
-      this.errorMessage.set('Nome do save não encontrado. Volte para o início.');
+      this.errorMessage.set('Contexto do save não encontrado. Selecione um save para continuar.');
       this.isCreatingSave.set(false);
+      void this.router.navigateByUrl('/load-game');
       return;
     }
 

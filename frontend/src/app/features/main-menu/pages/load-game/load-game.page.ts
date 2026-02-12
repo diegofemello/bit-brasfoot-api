@@ -84,6 +84,7 @@ export class LoadGamePage {
 
   selectSave(saveGameId: string) {
     this.gameState.selectSaveGame(saveGameId);
+    this.gameState.clearPendingSaveName();
     void this.router.navigateByUrl('/dashboard');
   }
 }

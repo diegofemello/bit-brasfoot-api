@@ -1,0 +1,5 @@
+# Playwright artifacts
+.playwright-mcp/
+playwright/
+playwright-report/
+test-results/

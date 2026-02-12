@@ -76,6 +76,9 @@ export class NewGamePage {
       return;
     }
 
+    this.gameState.clearActiveSaveContext();
+    this.gameState.clearPendingSaveName();
+
     this.errorMessage.set(null);
     this.isLoading.set(true);
 
