@@ -48,14 +48,15 @@ export class Player {
   @Column({ type: 'int', default: 50 })
   potential!: number; // Potencial máximo (1-100)
 
-  @Column({ name: 'club_id' })
-  clubId!: string;
+  @Column({ name: 'club_id', nullable: true })
+  clubId!: string | null;
 
   @ManyToOne(() => Club, (club) => club.players, {
-    onDelete: 'CASCADE',
+    onDelete: 'SET NULL',
+    nullable: true,
   })
   @JoinColumn({ name: 'club_id' })
-  club!: Club;
+  club!: Club | null;
 
   @Column({ type: 'bigint', default: 100000 })
   value!: number; // Valor de mercado

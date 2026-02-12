@@ -106,7 +106,7 @@ interface InfrastructureState {
 
         @if (club()) {
           <div class="flex flex-col gap-6">
-            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
               <a
                 routerLink="/squad"
                 class="rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold hover:border-emerald-400"
@@ -130,6 +130,12 @@ interface InfrastructureState {
                 class="rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold hover:border-emerald-400"
               >
                 Infraestrutura
+              </a>
+              <a
+                routerLink="/transfers"
+                class="rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold hover:border-emerald-400"
+              >
+                Transferências
               </a>
               <a
                 routerLink="/load-game"

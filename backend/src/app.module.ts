@@ -14,6 +14,7 @@ import { PlayerModule } from './modules/player/player.module';
 import { SaveGameModule } from './modules/save-game/save-game.module';
 import { SeedModule } from './modules/seed/seed.module';
 import { TacticModule } from './modules/tactic/tactic.module';
+import { TransferModule } from './modules/transfer/transfer.module';
 import { UserModule } from './modules/user/user.module';
 
 @Module({
@@ -52,6 +53,7 @@ import { UserModule } from './modules/user/user.module';
     TacticModule,
     FinanceModule,
     InfrastructureModule,
+    TransferModule,
     SeedModule,
   ],
   controllers: [AppController],
