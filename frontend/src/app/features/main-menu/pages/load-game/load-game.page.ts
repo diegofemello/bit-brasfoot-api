@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { PaginatedResult } from '../../../../core/models/paginated-result.model';
 import { ApiService } from '../../../../core/services/api.service';
 import { GameStateService } from '../../../../core/services/game-state.service';
@@ -64,6 +64,7 @@ interface SaveGameItem {
 export class LoadGamePage {
   private readonly apiService = inject(ApiService);
   private readonly gameState = inject(GameStateService);
+  private readonly router = inject(Router);
 
   readonly saveGames = signal<SaveGameItem[]>([]);
   readonly selectedSaveGameId = this.gameState.selectedSaveGameId;
@@ -83,5 +84,6 @@ export class LoadGamePage {
 
   selectSave(saveGameId: string) {
     this.gameState.selectSaveGame(saveGameId);
+    void this.router.navigateByUrl('/dashboard');
   }
 }

@@ -187,25 +187,51 @@ export class SelectClubPage {
   }
 
   selectClub(club: Club) {
+    const selectedSaveGameId = this.gameState.selectedSaveGameId();
     const saveName = this.gameState.pendingSaveName();
-    if (!saveName) {
-      this.errorMessage.set('Nome do save não encontrado. Volte para o início.');
-      return;
-    }
 
     this.errorMessage.set(null);
     this.isCreatingSave.set(true);
+
+    if (selectedSaveGameId) {
+      this.apiService
+        .patch<SaveGameResponse>(`save-games/${selectedSaveGameId}/club`, {
+          clubId: club.id,
+        })
+        .subscribe({
+          next: (saveGame) => {
+            this.gameState.selectSaveGame(saveGame.id);
+            this.gameState.selectClub(club.id);
+            this.gameState.clearPendingSaveName();
+            void this.router.navigateByUrl('/dashboard');
+          },
+          error: () => {
+            this.errorMessage.set('Não foi possível vincular o clube ao save.');
+            this.isCreatingSave.set(false);
+          },
+        });
+
+      return;
+    }
+
+    if (!saveName) {
+      this.errorMessage.set('Nome do save não encontrado. Volte para o início.');
+      this.isCreatingSave.set(false);
+      return;
+    }
 
     // Criar o save com o clube selecionado
     this.apiService
       .post<SaveGameResponse>('save-games', {
         name: saveName,
+        clubId: club.id,
       })
       .subscribe({
         next: (saveGame) => {
           this.gameState.selectSaveGame(saveGame.id);
+          this.gameState.selectClub(club.id);
           this.gameState.clearPendingSaveName();
-          void this.router.navigateByUrl('/load-game');
+          void this.router.navigateByUrl('/dashboard');
         },
         error: () => {
           this.errorMessage.set('Não foi possível criar o save.');

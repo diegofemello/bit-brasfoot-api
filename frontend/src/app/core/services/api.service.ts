@@ -16,6 +16,10 @@ export class ApiService {
     return this.http.post<T>(`${this.baseUrl}/${path}`, body);
   }
 
+  patch<T>(path: string, body: unknown) {
+    return this.http.patch<T>(`${this.baseUrl}/${path}`, body);
+  }
+
   private toHttpParams(params?: Record<string, string | number | boolean>) {
     if (!params) {
       return undefined;

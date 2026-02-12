@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { DashboardPage } from './features/game/pages/dashboard/dashboard.page';
 import { LoadGamePage } from './features/main-menu/pages/load-game/load-game.page';
 import { MainMenuPage } from './features/main-menu/pages/main-menu/main-menu.page';
 import { NewGamePage } from './features/main-menu/pages/new-game/new-game.page';
@@ -25,6 +26,10 @@ export const routes: Routes = [
   {
     path: 'load-game',
     component: LoadGamePage,
+  },
+  {
+    path: 'dashboard',
+    component: DashboardPage,
   },
   {
     path: '**',

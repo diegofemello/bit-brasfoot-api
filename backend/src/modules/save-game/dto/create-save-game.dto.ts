@@ -1,10 +1,10 @@
 import {
-    IsInt,
-    IsOptional,
-    IsString,
-    IsUUID,
-    Length,
-    Min,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Length,
+  Min,,
 } from 'class-validator';
 
 export class CreateSaveGameDto {
@@ -15,7 +15,11 @@ export class CreateSaveGameDto {
 
   @IsString()
   @Length(2, 100)
-  name: string;
+  name!: string;
+
+  @IsOptional()
+  @IsUUID()
+  clubId?: string;
 
   @IsOptional()
   @IsInt()
