@@ -10,6 +10,11 @@ import {
 import { Club } from '../../club/entities/club.entity';
 import { CompetitionSeason } from './competition-season.entity';
 
+export enum StandingStage {
+  LEAGUE = 'league',
+  GROUP = 'group',
+}
+
 @Entity({ name: 'standings' })
 export class Standing {
   @PrimaryGeneratedColumn('uuid')
@@ -28,6 +33,16 @@ export class Standing {
   @ManyToOne(() => Club, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'club_id' })
   club!: Club;
+
+  @Column({
+    type: 'enum',
+    enum: StandingStage,
+    default: StandingStage.LEAGUE,
+  })
+  stage!: StandingStage;
+
+  @Column({ name: 'group_name', type: 'varchar', length: 20, nullable: true })
+  groupName!: string | null;
 
   @Column({ type: 'int', default: 0 })
   position!: number;

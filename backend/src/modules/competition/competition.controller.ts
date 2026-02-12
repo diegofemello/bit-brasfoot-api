@@ -24,6 +24,16 @@ export class CompetitionController {
     return this.competitionService.getSeasonStandings(seasonId);
   }
 
+  @Get('seasons/:seasonId/group-standings')
+  getGroupStandings(@Param('seasonId') seasonId: string) {
+    return this.competitionService.getSeasonGroupStandings(seasonId);
+  }
+
+  @Get('seasons/:seasonId/knockout')
+  getKnockout(@Param('seasonId') seasonId: string) {
+    return this.competitionService.getSeasonKnockout(seasonId);
+  }
+
   @Get('seasons/:seasonId/fixtures')
   getFixtures(@Param('seasonId') seasonId: string, @Query() query: QuerySeasonFixturesDto) {
     return this.competitionService.getSeasonFixtures(seasonId, query);

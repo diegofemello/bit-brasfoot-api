@@ -15,6 +15,19 @@ export enum FixtureStatus {
   PLAYED = 'played',
 }
 
+export enum FixtureStage {
+  LEAGUE = 'league',
+  GROUP = 'group',
+  KNOCKOUT = 'knockout',
+}
+
+export enum KnockoutRound {
+  ROUND_OF_16 = 'round_of_16',
+  QUARTERFINAL = 'quarterfinal',
+  SEMIFINAL = 'semifinal',
+  FINAL = 'final',
+}
+
 @Entity({ name: 'fixtures' })
 export class Fixture {
   @PrimaryGeneratedColumn('uuid')
@@ -29,6 +42,24 @@ export class Fixture {
 
   @Column({ type: 'int' })
   round!: number;
+
+  @Column({
+    type: 'enum',
+    enum: FixtureStage,
+    default: FixtureStage.LEAGUE,
+  })
+  stage!: FixtureStage;
+
+  @Column({ name: 'group_name', type: 'varchar', length: 20, nullable: true })
+  groupName!: string | null;
+
+  @Column({
+    name: 'knockout_round',
+    type: 'enum',
+    enum: KnockoutRound,
+    nullable: true,
+  })
+  knockoutRound!: KnockoutRound | null;
 
   @Column({ name: 'home_club_id' })
   homeClubId!: string;

@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, Min } from 'class-validator';
 
 export class QuerySeasonFixturesDto {
   @IsOptional()
@@ -7,4 +7,8 @@ export class QuerySeasonFixturesDto {
   @IsInt()
   @Min(1)
   round?: number;
+
+  @IsOptional()
+  @IsIn(['league', 'group', 'knockout'])
+  stage?: 'league' | 'group' | 'knockout';
 }

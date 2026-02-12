@@ -26,6 +26,7 @@ interface Standing {
   goalsFor: number;
   goalsAgainst: number;
   goalDifference: number;
+  groupName?: string | null;
   club: {
     id: string;
     name: string;
@@ -37,6 +38,9 @@ interface Fixture {
   round: number;
   matchDate: string;
   status: 'scheduled' | 'played';
+  stage: 'league' | 'group' | 'knockout';
+  groupName?: string | null;
+  knockoutRound?: 'round_of_16' | 'quarterfinal' | 'semifinal' | 'final' | null;
   homeScore: number | null;
   awayScore: number | null;
   homeClub: {
@@ -52,6 +56,16 @@ interface Fixture {
 interface FixtureResponse {
   data: Fixture[];
   availableRounds: number[];
+}
+
+interface GroupStanding {
+  groupName: string;
+  table: Standing[];
+}
+
+interface KnockoutStage {
+  round: string;
+  matches: Fixture[];
 }
 
 interface TopScorer {
@@ -114,43 +128,76 @@ interface TopScorer {
 
         @if (selectedCompetition()) {
           <div class="grid gap-6 lg:grid-cols-3">
-            <div class="rounded-lg border border-slate-800 bg-slate-900 p-4 lg:col-span-2">
-              <h3 class="mb-3 text-lg font-semibold">Tabela de classificação</h3>
-              <div class="overflow-x-auto">
-                <table class="w-full min-w-[760px] border-collapse text-sm">
-                  <thead class="text-left text-xs text-slate-400">
-                    <tr>
-                      <th class="border-b border-slate-800 px-2 py-2">#</th>
-                      <th class="border-b border-slate-800 px-2 py-2">Clube</th>
-                      <th class="border-b border-slate-800 px-2 py-2">PTS</th>
-                      <th class="border-b border-slate-800 px-2 py-2">J</th>
-                      <th class="border-b border-slate-800 px-2 py-2">V</th>
-                      <th class="border-b border-slate-800 px-2 py-2">E</th>
-                      <th class="border-b border-slate-800 px-2 py-2">D</th>
-                      <th class="border-b border-slate-800 px-2 py-2">GP</th>
-                      <th class="border-b border-slate-800 px-2 py-2">GC</th>
-                      <th class="border-b border-slate-800 px-2 py-2">SG</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (item of standings(); track item.id) {
-                      <tr class="odd:bg-slate-950/60" [class.bg-emerald-500/10]="item.position <= 4" [class.bg-rose-500/10]="item.position > standings().length - 2">
-                        <td class="px-2 py-2">{{ item.position }}</td>
-                        <td class="px-2 py-2">{{ item.club.name }}</td>
-                        <td class="px-2 py-2 font-semibold">{{ item.points }}</td>
-                        <td class="px-2 py-2">{{ item.played }}</td>
-                        <td class="px-2 py-2">{{ item.wins }}</td>
-                        <td class="px-2 py-2">{{ item.draws }}</td>
-                        <td class="px-2 py-2">{{ item.losses }}</td>
-                        <td class="px-2 py-2">{{ item.goalsFor }}</td>
-                        <td class="px-2 py-2">{{ item.goalsAgainst }}</td>
-                        <td class="px-2 py-2">{{ item.goalDifference }}</td>
+            @if (selectedCompetition()?.competitionType === 'league') {
+              <div class="rounded-lg border border-slate-800 bg-slate-900 p-4 lg:col-span-2">
+                <h3 class="mb-3 text-lg font-semibold">Tabela de classificação</h3>
+                <div class="overflow-x-auto">
+                  <table class="w-full min-w-[760px] border-collapse text-sm">
+                    <thead class="text-left text-xs text-slate-400">
+                      <tr>
+                        <th class="border-b border-slate-800 px-2 py-2">#</th>
+                        <th class="border-b border-slate-800 px-2 py-2">Clube</th>
+                        <th class="border-b border-slate-800 px-2 py-2">PTS</th>
+                        <th class="border-b border-slate-800 px-2 py-2">J</th>
+                        <th class="border-b border-slate-800 px-2 py-2">V</th>
+                        <th class="border-b border-slate-800 px-2 py-2">E</th>
+                        <th class="border-b border-slate-800 px-2 py-2">D</th>
+                        <th class="border-b border-slate-800 px-2 py-2">GP</th>
+                        <th class="border-b border-slate-800 px-2 py-2">GC</th>
+                        <th class="border-b border-slate-800 px-2 py-2">SG</th>
                       </tr>
-                    }
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      @for (item of standings(); track item.id) {
+                        <tr class="odd:bg-slate-950/60" [class.bg-emerald-500/10]="item.position <= 4" [class.bg-rose-500/10]="item.position > standings().length - 2">
+                          <td class="px-2 py-2">{{ item.position }}</td>
+                          <td class="px-2 py-2">{{ item.club.name }}</td>
+                          <td class="px-2 py-2 font-semibold">{{ item.points }}</td>
+                          <td class="px-2 py-2">{{ item.played }}</td>
+                          <td class="px-2 py-2">{{ item.wins }}</td>
+                          <td class="px-2 py-2">{{ item.draws }}</td>
+                          <td class="px-2 py-2">{{ item.losses }}</td>
+                          <td class="px-2 py-2">{{ item.goalsFor }}</td>
+                          <td class="px-2 py-2">{{ item.goalsAgainst }}</td>
+                          <td class="px-2 py-2">{{ item.goalDifference }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            } @else {
+              <div class="rounded-lg border border-slate-800 bg-slate-900 p-4 lg:col-span-2">
+                <h3 class="mb-3 text-lg font-semibold">Fase de grupos</h3>
+                <div class="grid gap-4 sm:grid-cols-2">
+                  @for (group of groupStandings(); track group.groupName) {
+                    <div class="rounded border border-slate-800 bg-slate-950 p-3">
+                      <p class="mb-2 text-sm font-semibold text-emerald-300">{{ group.groupName }}</p>
+                      <table class="w-full border-collapse text-xs">
+                        <thead class="text-left text-slate-400">
+                          <tr>
+                            <th class="px-1 py-1">#</th>
+                            <th class="px-1 py-1">Clube</th>
+                            <th class="px-1 py-1">PTS</th>
+                            <th class="px-1 py-1">SG</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (item of group.table; track item.id) {
+                            <tr [class.bg-emerald-500/10]="item.position <= 2">
+                              <td class="px-1 py-1">{{ item.position }}</td>
+                              <td class="px-1 py-1">{{ item.club.name }}</td>
+                              <td class="px-1 py-1">{{ item.points }}</td>
+                              <td class="px-1 py-1">{{ item.goalDifference }}</td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
 
             <div class="rounded-lg border border-slate-800 bg-slate-900 p-4">
               <h3 class="mb-3 text-lg font-semibold">Artilharia</h3>
@@ -193,16 +240,26 @@ interface TopScorer {
             </div>
           </div>
 
-          <div class="grid gap-4 sm:grid-cols-2">
+          @if (knockoutStages().length > 0) {
             <div class="rounded-lg border border-slate-800 bg-slate-900 p-4">
-              <h3 class="mb-2 text-sm font-semibold text-slate-300">Fase de grupos</h3>
-              <p class="text-sm text-slate-400">Não aplicável para competição de liga nesta fase.</p>
+              <h3 class="mb-3 text-lg font-semibold">Chave mata-mata</h3>
+              <div class="grid gap-3">
+                @for (stage of knockoutStages(); track stage.round) {
+                  <div class="rounded border border-slate-800 bg-slate-950 p-3">
+                    <p class="mb-2 text-sm font-semibold text-emerald-300">{{ formatKnockoutRound(stage.round) }}</p>
+                    <div class="grid gap-2">
+                      @for (match of stage.matches; track match.id) {
+                        <div class="flex items-center justify-between rounded bg-slate-900 px-3 py-2 text-sm">
+                          <span>{{ match.homeClub.name }} x {{ match.awayClub.name }}</span>
+                          <span class="text-xs text-slate-400">{{ match.matchDate }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
             </div>
-            <div class="rounded-lg border border-slate-800 bg-slate-900 p-4">
-              <h3 class="mb-2 text-sm font-semibold text-slate-300">Chave mata-mata</h3>
-              <p class="text-sm text-slate-400">Disponível nas próximas competições de copa.</p>
-            </div>
-          </div>
+          }
         }
       </section>
     </main>
@@ -217,6 +274,8 @@ export class CompetitionsPage {
   readonly selectedSeasonId = signal<string | null>(null);
   readonly standings = signal<Standing[]>([]);
   readonly fixtures = signal<Fixture[]>([]);
+  readonly groupStandings = signal<GroupStanding[]>([]);
+  readonly knockoutStages = signal<KnockoutStage[]>([]);
   readonly rounds = signal<number[]>([]);
   readonly selectedRound = signal<number>(1);
   readonly topScorers = signal<TopScorer[]>([]);
@@ -281,7 +340,18 @@ export class CompetitionsPage {
   }
 
   private loadSeasonData(seasonId: string) {
-    this.loadStandings(seasonId);
+    const competition = this.competitions().find((item) => item.seasonId === seasonId);
+
+    if (competition?.competitionType === 'league') {
+      this.loadStandings(seasonId);
+      this.groupStandings.set([]);
+      this.knockoutStages.set([]);
+    } else {
+      this.standings.set([]);
+      this.loadGroupStandings(seasonId);
+      this.loadKnockout(seasonId);
+    }
+
     this.loadFixtures(seasonId);
     this.loadTopScorers(seasonId);
   }
@@ -293,10 +363,32 @@ export class CompetitionsPage {
     });
   }
 
+  private loadGroupStandings(seasonId: string) {
+    this.apiService.get<GroupStanding[]>(`competitions/seasons/${seasonId}/group-standings`).subscribe({
+      next: (groups) => this.groupStandings.set(groups),
+      error: () => this.setFeedback('Falha ao carregar fase de grupos.', true),
+    });
+  }
+
+  private loadKnockout(seasonId: string) {
+    this.apiService.get<KnockoutStage[]>(`competitions/seasons/${seasonId}/knockout`).subscribe({
+      next: (stages) => this.knockoutStages.set(stages),
+      error: () => this.setFeedback('Falha ao carregar chave mata-mata.', true),
+    });
+  }
+
   private loadFixtures(seasonId: string, round?: number) {
+    const stage =
+      this.selectedCompetition()?.competitionType === 'league'
+        ? 'league'
+        : this.selectedCompetition()?.competitionType === 'continental'
+          ? 'group'
+          : 'knockout';
+
     this.apiService
       .get<FixtureResponse>(`competitions/seasons/${seasonId}/fixtures`, {
         round: round ?? this.selectedRound(),
+        stage,
       })
       .subscribe({
         next: (response) => {
@@ -338,5 +430,13 @@ export class CompetitionsPage {
       return message;
     }
     return fallback;
+  }
+
+  formatKnockoutRound(value: string) {
+    if (value === 'round_of_16') return 'Oitavas de final';
+    if (value === 'quarterfinal') return 'Quartas de final';
+    if (value === 'semifinal') return 'Semifinal';
+    if (value === 'final') return 'Final';
+    return 'Mata-mata';
   }
 }
