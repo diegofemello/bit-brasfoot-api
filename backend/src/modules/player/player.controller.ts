@@ -43,6 +43,11 @@ export class PlayerController {
     return this.playerService.findPlayerById(id);
   }
 
+  @Get(':id/stats')
+  stats(@Param('id') id: string) {
+    return this.playerService.getPlayerStats(id);
+  }
+
   @Put(':id')
   update(@Param('id') id: string, @Body() payload: UpdatePlayerDto) {
     return this.playerService.updatePlayer(id, payload);

@@ -20,6 +20,14 @@ export class ApiService {
     return this.http.patch<T>(`${this.baseUrl}/${path}`, body);
   }
 
+  put<T>(path: string, body: unknown) {
+    return this.http.put<T>(`${this.baseUrl}/${path}`, body);
+  }
+
+  delete<T>(path: string) {
+    return this.http.delete<T>(`${this.baseUrl}/${path}`);
+  }
+
   private toHttpParams(params?: Record<string, string | number | boolean>) {
     if (!params) {
       return undefined;
@@ -27,6 +35,9 @@ export class ApiService {
 
     let httpParams = new HttpParams();
     Object.entries(params).forEach(([key, value]) => {
+      if (value === '' || value === null || value === undefined) {
+        return;
+      }
       httpParams = httpParams.set(key, String(value));
     });
 

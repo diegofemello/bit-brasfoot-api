@@ -138,4 +138,29 @@ export class PlayerService extends BaseCrudService<Player> {
       message: 'Jogador removido com sucesso',
     };
   }
+
+  async getPlayerStats(id: string) {
+    const player = await this.findPlayerById(id);
+
+    const formHistory = Array.from({ length: 8 }).map((_, index) => {
+      const variation = ((player.overall + index) % 5) - 2;
+      return {
+        match: index + 1,
+        rating: Math.max(5.5, Math.min(9.5, 7 + variation * 0.3)),
+      };
+    });
+
+    return {
+      player,
+      summary: {
+        averageRating:
+          formHistory.reduce((sum, item) => sum + item.rating, 0) /
+          formHistory.length,
+        goals: Math.max(0, Math.floor((player.overall - 60) / 5)),
+        assists: Math.max(0, Math.floor((player.potential - 65) / 6)),
+        matches: 8,
+      },
+      formHistory,
+    };
+  }
 }

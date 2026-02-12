@@ -7,10 +7,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ClubModule } from './modules/club/club.module';
 import { CountryModule } from './modules/country/country.module';
+import { FinanceModule } from './modules/finance/finance.module';
+import { InfrastructureModule } from './modules/infrastructure/infrastructure.module';
 import { LeagueModule } from './modules/league/league.module';
 import { PlayerModule } from './modules/player/player.module';
 import { SaveGameModule } from './modules/save-game/save-game.module';
 import { SeedModule } from './modules/seed/seed.module';
+import { TacticModule } from './modules/tactic/tactic.module';
 import { UserModule } from './modules/user/user.module';
 
 @Module({
@@ -46,6 +49,9 @@ import { UserModule } from './modules/user/user.module';
     LeagueModule,
     ClubModule,
     PlayerModule,
+    TacticModule,
+    FinanceModule,
+    InfrastructureModule,
     SeedModule,
   ],
   controllers: [AppController],

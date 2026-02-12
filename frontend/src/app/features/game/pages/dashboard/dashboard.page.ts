@@ -41,6 +41,19 @@ interface SaveGame {
   club: Club | null;
 }
 
+interface FinanceAccount {
+  balance: number;
+  monthlyIncome: number;
+  monthlyExpense: number;
+}
+
+interface InfrastructureState {
+  trainingLevel: number;
+  youthLevel: number;
+  medicalLevel: number;
+  stadiumLevel: number;
+}
+
 @Component({
   selector: 'app-dashboard-page',
   imports: [CommonModule, RouterLink],
@@ -93,6 +106,39 @@ interface SaveGame {
 
         @if (club()) {
           <div class="flex flex-col gap-6">
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              <a
+                routerLink="/squad"
+                class="rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold hover:border-emerald-400"
+              >
+                Elenco
+              </a>
+              <a
+                routerLink="/tactics"
+                class="rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold hover:border-emerald-400"
+              >
+                Táticas
+              </a>
+              <a
+                routerLink="/finances"
+                class="rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold hover:border-emerald-400"
+              >
+                Finanças
+              </a>
+              <a
+                routerLink="/infrastructure"
+                class="rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold hover:border-emerald-400"
+              >
+                Infraestrutura
+              </a>
+              <a
+                routerLink="/load-game"
+                class="rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold hover:border-emerald-400"
+              >
+                Trocar Save
+              </a>
+            </div>
+
             <div class="rounded-lg border border-slate-800 bg-slate-900 p-6">
               <div class="mb-4 flex items-center justify-between">
                 <div>
@@ -130,6 +176,46 @@ interface SaveGame {
                 </div>
               </div>
             </div>
+
+            @if (finance()) {
+              <div class="grid gap-4 sm:grid-cols-3">
+                <div class="rounded-lg border border-slate-800 bg-slate-900 px-4 py-3">
+                  <p class="text-xs text-slate-400">Saldo</p>
+                  <p class="text-lg font-bold text-emerald-400">
+                    {{ formatCurrency(finance()?.balance || 0) }}
+                  </p>
+                </div>
+                <div class="rounded-lg border border-slate-800 bg-slate-900 px-4 py-3">
+                  <p class="text-xs text-slate-400">Receita mensal</p>
+                  <p class="text-lg font-bold">{{ formatCurrency(finance()?.monthlyIncome || 0) }}</p>
+                </div>
+                <div class="rounded-lg border border-slate-800 bg-slate-900 px-4 py-3">
+                  <p class="text-xs text-slate-400">Despesas mensais</p>
+                  <p class="text-lg font-bold">{{ formatCurrency(finance()?.monthlyExpense || 0) }}</p>
+                </div>
+              </div>
+            }
+
+            @if (infrastructure()) {
+              <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="rounded-lg border border-slate-800 bg-slate-900 px-4 py-3">
+                  <p class="text-xs text-slate-400">Treino</p>
+                  <p class="text-lg font-bold">Nível {{ infrastructure()?.trainingLevel }}</p>
+                </div>
+                <div class="rounded-lg border border-slate-800 bg-slate-900 px-4 py-3">
+                  <p class="text-xs text-slate-400">Base</p>
+                  <p class="text-lg font-bold">Nível {{ infrastructure()?.youthLevel }}</p>
+                </div>
+                <div class="rounded-lg border border-slate-800 bg-slate-900 px-4 py-3">
+                  <p class="text-xs text-slate-400">Médico</p>
+                  <p class="text-lg font-bold">Nível {{ infrastructure()?.medicalLevel }}</p>
+                </div>
+                <div class="rounded-lg border border-slate-800 bg-slate-900 px-4 py-3">
+                  <p class="text-xs text-slate-400">Estádio</p>
+                  <p class="text-lg font-bold">Nível {{ infrastructure()?.stadiumLevel }}</p>
+                </div>
+              </div>
+            }
 
             <div class="rounded-lg border border-slate-800 bg-slate-900 p-6">
               <h3 class="mb-4 text-xl font-bold">Elenco</h3>
@@ -193,6 +279,8 @@ export class DashboardPage {
   readonly saveGame = signal<SaveGame | null>(null);
   readonly club = signal<Club | null>(null);
   readonly players = signal<Player[]>([]);
+  readonly finance = signal<FinanceAccount | null>(null);
+  readonly infrastructure = signal<InfrastructureState | null>(null);
   readonly errorMessage = signal<string | null>(null);
 
   ngOnInit() {
@@ -214,6 +302,9 @@ export class DashboardPage {
           this.gameState.selectClub(save.club.id);
           this.loadPlayers(save.club.id);
         }
+
+        this.loadFinance(save.id);
+        this.loadInfrastructure(save.id);
       },
       error: () => {
         this.errorMessage.set('Erro ao carregar o save.');
@@ -230,6 +321,18 @@ export class DashboardPage {
           this.errorMessage.set('Erro ao carregar jogadores.');
         },
       });
+  }
+
+  loadFinance(saveGameId: string) {
+    this.apiService.get<FinanceAccount>(`finances/save/${saveGameId}/account`).subscribe({
+      next: (finance) => this.finance.set(finance),
+    });
+  }
+
+  loadInfrastructure(saveGameId: string) {
+    this.apiService.get<InfrastructureState>(`infrastructures/save/${saveGameId}`).subscribe({
+      next: (infrastructure) => this.infrastructure.set(infrastructure),
+    });
   }
 
   calculateAverageOverall(): number {
