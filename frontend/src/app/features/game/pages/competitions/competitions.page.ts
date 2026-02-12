@@ -76,6 +76,14 @@ interface TopScorer {
   goals: number;
 }
 
+interface SimulatedRoundResponse {
+  seasonId: string;
+  round: number;
+  currentRound: number;
+  status: 'ongoing' | 'finished';
+  matchesSimulated: number;
+}
+
 @Component({
   selector: 'app-competitions-page',
   imports: [CommonModule, RouterLink],
@@ -96,13 +104,24 @@ interface TopScorer {
         <div class="rounded-lg border border-slate-800 bg-slate-900 p-4">
           <div class="mb-3 flex items-center justify-between">
             <h2 class="text-lg font-semibold">Competições do save</h2>
-            <button
-              type="button"
-              (click)="setupCompetitions()"
-              class="rounded bg-emerald-500 px-3 py-1 text-sm font-semibold text-slate-950 hover:bg-emerald-400"
-            >
-              Gerar calendário
-            </button>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                (click)="advanceSeason()"
+                [disabled]="advancingSeason()"
+                class="rounded bg-indigo-500 px-3 py-1 text-sm font-semibold text-slate-100 hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Avançar temporada
+              </button>
+              <button
+                type="button"
+                (click)="setupCompetitions()"
+                [disabled]="settingUpCompetitions()"
+                class="rounded bg-emerald-500 px-3 py-1 text-sm font-semibold text-slate-950 hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Gerar calendário
+              </button>
+            </div>
           </div>
 
           <div class="grid gap-2">
@@ -216,15 +235,25 @@ interface TopScorer {
           <div class="rounded-lg border border-slate-800 bg-slate-900 p-4">
             <div class="mb-3 flex items-center justify-between">
               <h3 class="text-lg font-semibold">Calendário de jogos</h3>
-              <select
-                [value]="selectedRound()"
-                (change)="changeRound(+$any($event.target).value)"
-                class="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm"
-              >
-                @for (round of rounds(); track round) {
-                  <option [value]="round">Rodada {{ round }}</option>
-                }
-              </select>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  (click)="simulateCurrentRound()"
+                  [disabled]="simulatingRound() || !selectedCompetition() || selectedCompetition()?.status === 'finished'"
+                  class="rounded bg-emerald-500 px-3 py-1 text-sm font-semibold text-slate-950 hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Simular rodada
+                </button>
+                <select
+                  [value]="selectedRound()"
+                  (change)="changeRound(+$any($event.target).value)"
+                  class="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm"
+                >
+                  @for (round of rounds(); track round) {
+                    <option [value]="round">Rodada {{ round }}</option>
+                  }
+                </select>
+              </div>
             </div>
 
             <div class="grid gap-2">
@@ -279,6 +308,9 @@ export class CompetitionsPage {
   readonly rounds = signal<number[]>([]);
   readonly selectedRound = signal<number>(1);
   readonly topScorers = signal<TopScorer[]>([]);
+  readonly simulatingRound = signal(false);
+  readonly settingUpCompetitions = signal(false);
+  readonly advancingSeason = signal(false);
 
   readonly feedback = signal<string | null>(null);
   readonly feedbackError = signal(false);
@@ -296,17 +328,21 @@ export class CompetitionsPage {
     this.loadCompetitions();
   }
 
-  loadCompetitions() {
+  loadCompetitions(preferredSeasonId?: string) {
     const saveGameId = this.gameState.selectedSaveGameId();
     if (!saveGameId) return;
 
     this.apiService.get<SaveCompetition[]>(`competitions/save/${saveGameId}`).subscribe({
       next: (competitions) => {
         this.competitions.set(competitions);
-        const firstSeasonId = competitions[0]?.seasonId ?? null;
-        this.selectedSeasonId.set(firstSeasonId);
-        if (firstSeasonId) {
-          this.loadSeasonData(firstSeasonId);
+        const selectedSeasonId =
+          preferredSeasonId && competitions.some((item) => item.seasonId === preferredSeasonId)
+            ? preferredSeasonId
+            : competitions[0]?.seasonId ?? null;
+
+        this.selectedSeasonId.set(selectedSeasonId);
+        if (selectedSeasonId) {
+          this.loadSeasonData(selectedSeasonId);
         }
       },
       error: () => this.setFeedback('Falha ao carregar competições.', true),
@@ -317,12 +353,67 @@ export class CompetitionsPage {
     const saveGameId = this.gameState.selectedSaveGameId();
     if (!saveGameId) return;
 
+    this.settingUpCompetitions.set(true);
+
     this.apiService.post<SaveCompetition[]>(`competitions/save/${saveGameId}/setup`, {}).subscribe({
       next: () => {
         this.setFeedback('Calendário e competição gerados com sucesso.', false);
         this.loadCompetitions();
+        this.settingUpCompetitions.set(false);
       },
-      error: (err) => this.setFeedback(this.extractErrorMessage(err, 'Falha ao gerar calendário.'), true),
+      error: (err) => {
+        this.setFeedback(this.extractErrorMessage(err, 'Falha ao gerar calendário.'), true);
+        this.settingUpCompetitions.set(false);
+      },
+    });
+  }
+
+  simulateCurrentRound() {
+    const season = this.selectedCompetition();
+    if (!season) {
+      return;
+    }
+
+    this.simulatingRound.set(true);
+
+    this.apiService
+      .post<SimulatedRoundResponse>(`competitions/seasons/${season.seasonId}/simulate-round`, {
+        round: season.currentRound,
+      })
+      .subscribe({
+        next: (response) => {
+          this.setFeedback(
+            `Rodada ${response.round} simulada (${response.matchesSimulated} partidas).`,
+            false,
+          );
+          this.loadCompetitions(season.seasonId);
+          this.simulatingRound.set(false);
+        },
+        error: (err) => {
+          this.setFeedback(this.extractErrorMessage(err, 'Falha ao simular rodada.'), true);
+          this.simulatingRound.set(false);
+        },
+      });
+  }
+
+  advanceSeason() {
+    const saveGameId = this.gameState.selectedSaveGameId();
+    if (!saveGameId) {
+      return;
+    }
+
+    this.advancingSeason.set(true);
+
+    this.apiService.post(`seasons/save/${saveGameId}/advance`, {}).subscribe({
+      next: () => {
+        this.setFeedback('Nova temporada iniciada com sucesso.', false);
+        this.loadCompetitions();
+        this.advancingSeason.set(false);
+      },
+      error: (err) => {
+        this.setFeedback(this.extractErrorMessage(err, 'Falha ao avançar temporada.'), true);
+        this.advancingSeason.set(false);
+      },
     });
   }
 

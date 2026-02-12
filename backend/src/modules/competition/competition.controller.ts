@@ -43,4 +43,10 @@ export class CompetitionController {
   getTopScorers(@Param('seasonId') seasonId: string, @Query() query: QueryTopScorersDto) {
     return this.competitionService.getTopScorers(seasonId, query);
   }
+
+  @Post('seasons/:seasonId/simulate-round')
+  simulateRound(@Param('seasonId') seasonId: string, @Query('round') round?: string) {
+    const parsedRound = round ? Number(round) : undefined;
+    return this.competitionService.simulateRound(seasonId, parsedRound);
+  }
 }

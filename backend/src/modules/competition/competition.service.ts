@@ -102,6 +102,155 @@ export class CompetitionService {
     return [...singleLeg, ...mirrored];
   }
 
+  private clampScore(value: number) {
+    return Math.max(0, Math.min(7, Math.floor(value)));
+  }
+
+  private simulateMatchScore(homeStrength: number, awayStrength: number) {
+    const homeExpected =
+      1.3 +
+      (homeStrength - awayStrength) / 20 +
+      Math.random() * 1.4;
+    const awayExpected =
+      0.9 +
+      (awayStrength - homeStrength) / 22 +
+      Math.random() * 1.2;
+
+    return {
+      home: this.clampScore(homeExpected + Math.random() * 1.1),
+      away: this.clampScore(awayExpected + Math.random() * 1.1),
+    };
+  }
+
+  private async getClubStrengthMap(clubIds: string[]) {
+    const uniqueClubIds = Array.from(new Set(clubIds));
+
+    if (uniqueClubIds.length === 0) {
+      return new Map<string, number>();
+    }
+
+    const players = await this.playerRepository.find({
+      where: { clubId: In(uniqueClubIds) },
+      select: ['clubId', 'overall'],
+    });
+
+    const strengthMap = new Map<string, number>();
+
+    uniqueClubIds.forEach((clubId) => {
+      const clubPlayers = players.filter((player) => player.clubId === clubId);
+
+      if (clubPlayers.length === 0) {
+        strengthMap.set(clubId, 70);
+        return;
+      }
+
+      const averageOverall =
+        clubPlayers.reduce((sum, player) => sum + player.overall, 0) /
+        clubPlayers.length;
+
+      strengthMap.set(clubId, averageOverall);
+    });
+
+    return strengthMap;
+  }
+
+  private async recalculateStandingPositions(
+    seasonId: string,
+    stage: StandingStage,
+    groupName: string | null,
+  ) {
+    const groupNameCondition = groupName === null ? IsNull() : groupName;
+
+    const standings = await this.standingRepository.find({
+      where: {
+        seasonId,
+        stage,
+        groupName: groupNameCondition,
+      },
+      relations: ['club'],
+      order: {
+        points: 'DESC',
+        goalDifference: 'DESC',
+        goalsFor: 'DESC',
+        club: { name: 'ASC' },
+      },
+    });
+
+    standings.forEach((standing, index) => {
+      standing.position = index + 1;
+    });
+
+    await this.standingRepository.save(standings);
+  }
+
+  private async applyFixtureResultToStandings(fixture: Fixture) {
+    if (fixture.stage !== FixtureStage.LEAGUE && fixture.stage !== FixtureStage.GROUP) {
+      return;
+    }
+
+    const standingStage =
+      fixture.stage === FixtureStage.LEAGUE ? StandingStage.LEAGUE : StandingStage.GROUP;
+
+    const [homeStanding, awayStanding] = await Promise.all([
+      this.standingRepository.findOne({
+        where: {
+          seasonId: fixture.seasonId,
+          clubId: fixture.homeClubId,
+          stage: standingStage,
+          groupName: fixture.groupName ?? IsNull(),
+        },
+      }),
+      this.standingRepository.findOne({
+        where: {
+          seasonId: fixture.seasonId,
+          clubId: fixture.awayClubId,
+          stage: standingStage,
+          groupName: fixture.groupName ?? IsNull(),
+        },
+      }),
+    ]);
+
+    if (!homeStanding || !awayStanding) {
+      return;
+    }
+
+    const homeScore = fixture.homeScore ?? 0;
+    const awayScore = fixture.awayScore ?? 0;
+
+    homeStanding.played += 1;
+    awayStanding.played += 1;
+
+    homeStanding.goalsFor += homeScore;
+    homeStanding.goalsAgainst += awayScore;
+    awayStanding.goalsFor += awayScore;
+    awayStanding.goalsAgainst += homeScore;
+
+    homeStanding.goalDifference = homeStanding.goalsFor - homeStanding.goalsAgainst;
+    awayStanding.goalDifference = awayStanding.goalsFor - awayStanding.goalsAgainst;
+
+    if (homeScore > awayScore) {
+      homeStanding.wins += 1;
+      awayStanding.losses += 1;
+      homeStanding.points += 3;
+    } else if (homeScore < awayScore) {
+      awayStanding.wins += 1;
+      homeStanding.losses += 1;
+      awayStanding.points += 3;
+    } else {
+      homeStanding.draws += 1;
+      awayStanding.draws += 1;
+      homeStanding.points += 1;
+      awayStanding.points += 1;
+    }
+
+    await this.standingRepository.save([homeStanding, awayStanding]);
+    await this.recalculateStandingPositions(
+      fixture.seasonId,
+      standingStage,
+      fixture.groupName ?? null,
+    );
+  }
+
   private async ensureLeagueCompetitionSeason(save: SaveGame) {
     if (!save.clubId || !save.club?.leagueId) {
       throw new BadRequestException('Save sem clube selecionado para gerar competições');
@@ -368,6 +517,17 @@ export class CompetitionService {
     return this.getSaveCompetitions(saveGameId);
   }
 
+  async finishPreviousSeasons(saveGameId: string, nextSeasonYear: number) {
+    await this.seasonRepository
+      .createQueryBuilder()
+      .update(CompetitionSeason)
+      .set({ status: CompetitionSeasonStatus.FINISHED })
+      .where('save_game_id = :saveGameId', { saveGameId })
+      .andWhere('season_year < :nextSeasonYear', { nextSeasonYear })
+      .andWhere('status = :status', { status: CompetitionSeasonStatus.ONGOING })
+      .execute();
+  }
+
   async getSaveCompetitions(saveGameId: string) {
     await this.ensureSaveExists(saveGameId);
 
@@ -483,6 +643,88 @@ export class CompetitionService {
       round,
       matches,
     }));
+  }
+
+  async simulateRound(seasonId: string, round?: number) {
+    const season = await this.seasonRepository.findOne({ where: { id: seasonId } });
+    if (!season) {
+      throw new NotFoundException('Temporada da competição não encontrada');
+    }
+
+    if (season.status === CompetitionSeasonStatus.FINISHED) {
+      throw new BadRequestException('Temporada já finalizada');
+    }
+
+    const roundToSimulate = round ?? season.currentRound;
+    if (!Number.isInteger(roundToSimulate) || roundToSimulate < 1) {
+      throw new BadRequestException('Rodada inválida para simulação');
+    }
+
+    const fixtures = await this.fixtureRepository.find({
+      where: {
+        seasonId,
+        round: roundToSimulate,
+        status: FixtureStatus.SCHEDULED,
+      },
+      order: {
+        matchDate: 'ASC',
+      },
+    });
+
+    if (fixtures.length === 0) {
+      throw new BadRequestException('Nenhuma partida pendente para esta rodada');
+    }
+
+    const clubStrength = await this.getClubStrengthMap(
+      fixtures.flatMap((fixture) => [fixture.homeClubId, fixture.awayClubId]),
+    );
+
+    fixtures.forEach((fixture) => {
+      const homeStrength = clubStrength.get(fixture.homeClubId) ?? 70;
+      const awayStrength = clubStrength.get(fixture.awayClubId) ?? 70;
+      const score = this.simulateMatchScore(homeStrength, awayStrength);
+
+      fixture.homeScore = score.home;
+      fixture.awayScore = score.away;
+      fixture.status = FixtureStatus.PLAYED;
+    });
+
+    await this.fixtureRepository.save(fixtures);
+
+    for (const fixture of fixtures) {
+      await this.applyFixtureResultToStandings(fixture);
+    }
+
+    const maxRoundResult = await this.fixtureRepository
+      .createQueryBuilder('fixture')
+      .where('fixture.seasonId = :seasonId', { seasonId })
+      .select('COALESCE(MAX(fixture.round), 0)', 'maxRound')
+      .getRawOne<{ maxRound: string }>();
+
+    const maxRound = Number(maxRoundResult?.maxRound ?? 0);
+    const nextRound = roundToSimulate + 1;
+
+    season.currentRound = Math.min(nextRound, maxRound || nextRound);
+    if (nextRound > maxRound) {
+      season.status = CompetitionSeasonStatus.FINISHED;
+    }
+
+    await this.seasonRepository.save(season);
+
+    return {
+      seasonId,
+      round: roundToSimulate,
+      currentRound: season.currentRound,
+      status: season.status,
+      matchesSimulated: fixtures.length,
+      results: fixtures.map((fixture) => ({
+        fixtureId: fixture.id,
+        homeClubId: fixture.homeClubId,
+        awayClubId: fixture.awayClubId,
+        homeScore: fixture.homeScore,
+        awayScore: fixture.awayScore,
+      })),
+    };
   }
 
   async getSeasonFixtures(seasonId: string, query: QuerySeasonFixturesDto) {

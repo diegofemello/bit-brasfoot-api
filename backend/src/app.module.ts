@@ -13,6 +13,7 @@ import { InfrastructureModule } from './modules/infrastructure/infrastructure.mo
 import { LeagueModule } from './modules/league/league.module';
 import { PlayerModule } from './modules/player/player.module';
 import { SaveGameModule } from './modules/save-game/save-game.module';
+import { SeasonModule } from './modules/season/season.module';
 import { SeedModule } from './modules/seed/seed.module';
 import { TacticModule } from './modules/tactic/tactic.module';
 import { TransferModule } from './modules/transfer/transfer.module';
@@ -47,6 +48,7 @@ import { UserModule } from './modules/user/user.module';
     }),
     UserModule,
     SaveGameModule,
+    SeasonModule,
     CompetitionModule,
     CountryModule,
     LeagueModule,

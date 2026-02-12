@@ -1596,25 +1596,25 @@ Para cada clube (fim de temporada):
 
 **Backend:**
 
-- [ ] Implementar módulo Competition
-- [ ] Implementar módulo CompetitionSeason + Standing
-- [ ] Implementar módulo Fixture (geração de calendário)
-- [ ] Algoritmo de geração de rodadas (round-robin, ida e volta)
-- [ ] Algoritmo de geração de chaves (mata-mata)
-- [ ] Suporte a fase de grupos + mata-mata (Libertadores)
-- [ ] Implementar módulo Season
-- [ ] Gerar fixtures na criação de nova temporada
-- [ ] Atualizar standings após cada partida
+- [x] Implementar módulo Competition
+- [x] Implementar módulo CompetitionSeason + Standing
+- [x] Implementar módulo Fixture (geração de calendário)
+- [x] Algoritmo de geração de rodadas (round-robin, ida e volta)
+- [x] Algoritmo de geração de chaves (mata-mata)
+- [x] Suporte a fase de grupos + mata-mata (Libertadores)
+- [x] Implementar módulo Season
+- [x] Gerar fixtures na criação de nova temporada
+- [x] Atualizar standings após cada partida
 
 **Frontend:**
 
-- [ ] Lista de competições do save
-- [ ] Tabela de classificação (liga) com cores de zona
-- [ ] Calendário de jogos (fixtures)
-- [ ] Chaves de mata-mata visual
-- [ ] Fase de grupos
-- [ ] Artilharia por competição
-- [ ] Seletor de rodada
+- [x] Lista de competições do save
+- [x] Tabela de classificação (liga) com cores de zona
+- [x] Calendário de jogos (fixtures)
+- [x] Chaves de mata-mata visual
+- [x] Fase de grupos
+- [x] Artilharia por competição
+- [x] Seletor de rodada
 
 **Entregável:** Competições configuradas com calendário e classificação
 
