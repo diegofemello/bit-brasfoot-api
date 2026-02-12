@@ -84,22 +84,8 @@ export class NewGamePage {
     this.apiService.post<UserResponse>('users', { managerName: managerName.trim() }).subscribe({
       next: (user) => {
         this.gameState.selectUser(user.id);
-
-        // Não envia userId - na Fase 1 virá do token de autenticação
-        this.apiService
-          .post<SaveGameResponse>('save-games', {
-            name: saveName.trim(),
-          })
-          .subscribe({
-            next: (saveGame) => {
-              this.gameState.selectSaveGame(saveGame.id);
-              void this.router.navigateByUrl('/load-game');
-            },
-            error: () => {
-              this.errorMessage.set('Não foi possível criar o save inicial.');
-              this.isLoading.set(false);
-            },
-          });
+        this.gameState.setPendingSaveName(saveName.trim());
+        void this.router.navigateByUrl('/select-club');
       },
       error: () => {
         this.errorMessage.set('Não foi possível criar o manager.');

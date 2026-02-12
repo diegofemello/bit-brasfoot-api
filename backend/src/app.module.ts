@@ -5,7 +5,12 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ClubModule } from './modules/club/club.module';
+import { CountryModule } from './modules/country/country.module';
+import { LeagueModule } from './modules/league/league.module';
+import { PlayerModule } from './modules/player/player.module';
 import { SaveGameModule } from './modules/save-game/save-game.module';
+import { SeedModule } from './modules/seed/seed.module';
 import { UserModule } from './modules/user/user.module';
 
 @Module({
@@ -37,6 +42,11 @@ import { UserModule } from './modules/user/user.module';
     }),
     UserModule,
     SaveGameModule,
+    CountryModule,
+    LeagueModule,
+    ClubModule,
+    PlayerModule,
+    SeedModule,
   ],
   controllers: [AppController],
   providers: [
