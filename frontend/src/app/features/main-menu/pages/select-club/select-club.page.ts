@@ -40,83 +40,94 @@ interface SaveGameResponse {
       <section class="mx-auto flex w-full max-w-4xl flex-col gap-6 px-6 py-16">
         <h1 class="text-3xl font-bold">Escolha seu clube</h1>
 
-        <!-- Passo 1: Selecionar País -->
-        <div *ngIf="step() === 1" class="flex flex-col gap-4">
-          <h2 class="text-xl font-semibold text-slate-200">Selecione o país</h2>
-          <div class="grid gap-3 sm:grid-cols-2">
-            <button
-              type="button"
-              *ngFor="let country of countries()"
-              (click)="selectCountry(country)"
-              class="flex items-center gap-3 rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-left hover:border-emerald-400"
-            >
-              <span class="text-3xl">{{ country.flagEmoji }}</span>
-              <span class="font-semibold">{{ country.name }}</span>
-            </button>
+        @if (step() === 1) {
+          <div class="flex flex-col gap-4">
+            <h2 class="text-xl font-semibold text-slate-200">Selecione o país</h2>
+            <div class="grid gap-3 sm:grid-cols-2">
+              @for (country of countries(); track country.id) {
+                <button
+                  type="button"
+                  (click)="selectCountry(country)"
+                  class="flex items-center gap-3 rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-left hover:border-emerald-400"
+                >
+                  <span class="text-3xl">{{ country.flagEmoji }}</span>
+                  <span class="font-semibold">{{ country.name }}</span>
+                </button>
+              }
+            </div>
+            @if (countries().length === 0) {
+              <p class="text-slate-400">Carregando países...</p>
+            }
           </div>
-          <p *ngIf="countries().length === 0" class="text-slate-400">Carregando países...</p>
-        </div>
+        }
 
-        <!-- Passo 2: Selecionar Liga -->
-        <div *ngIf="step() === 2" class="flex flex-col gap-4">
-          <button
-            type="button"
-            (click)="step.set(1)"
-            class="w-fit text-sm text-emerald-300 hover:text-emerald-200"
-          >
-            ← Voltar para países
-          </button>
-          <h2 class="text-xl font-semibold text-slate-200">
-            Selecione a liga - {{ selectedCountry()?.name }}
-          </h2>
-          <div class="grid gap-3">
+        @if (step() === 2) {
+          <div class="flex flex-col gap-4">
             <button
               type="button"
-              *ngFor="let league of leagues()"
-              (click)="selectLeague(league)"
-              class="flex flex-col gap-1 rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-left hover:border-emerald-400"
+              (click)="step.set(1)"
+              class="w-fit text-sm text-emerald-300 hover:text-emerald-200"
             >
-              <span class="font-semibold">{{ league.name }}</span>
-              <span class="text-sm text-slate-400">Divisão {{ league.division }}</span>
+              ← Voltar para países
             </button>
+            <h2 class="text-xl font-semibold text-slate-200">
+              Selecione a liga - {{ selectedCountry()?.name }}
+            </h2>
+            <div class="grid gap-3">
+              @for (league of leagues(); track league.id) {
+                <button
+                  type="button"
+                  (click)="selectLeague(league)"
+                  class="flex flex-col gap-1 rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-left hover:border-emerald-400"
+                >
+                  <span class="font-semibold">{{ league.name }}</span>
+                  <span class="text-sm text-slate-400">Divisão {{ league.division }}</span>
+                </button>
+              }
+            </div>
+            @if (leagues().length === 0) {
+              <p class="text-slate-400">Carregando ligas...</p>
+            }
           </div>
-          <p *ngIf="leagues().length === 0" class="text-slate-400">Carregando ligas...</p>
-        </div>
+        }
 
-        <!-- Passo 3: Selecionar Clube -->
-        <div *ngIf="step() === 3" class="flex flex-col gap-4">
-          <button
-            type="button"
-            (click)="step.set(2); loadLeagues()"
-            class="w-fit text-sm text-emerald-300 hover:text-emerald-200"
-          >
-            ← Voltar para ligas
-          </button>
-          <h2 class="text-xl font-semibold text-slate-200">
-            Selecione o clube - {{ selectedLeague()?.name }}
-          </h2>
-          <div class="grid gap-3 sm:grid-cols-2">
+        @if (step() === 3) {
+          <div class="flex flex-col gap-4">
             <button
               type="button"
-              *ngFor="let club of clubs()"
-              (click)="selectClub(club)"
-              [disabled]="isCreatingSave()"
-              class="flex flex-col gap-1 rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-left hover:border-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+              (click)="step.set(2); loadLeagues()"
+              class="w-fit text-sm text-emerald-300 hover:text-emerald-200"
             >
-              <span class="font-semibold">{{ club.name }}</span>
-              <span class="text-xs text-slate-400">{{ club.stadiumName }}</span>
+              ← Voltar para ligas
             </button>
+            <h2 class="text-xl font-semibold text-slate-200">
+              Selecione o clube - {{ selectedLeague()?.name }}
+            </h2>
+            <div class="grid gap-3 sm:grid-cols-2">
+              @for (club of clubs(); track club.id) {
+                <button
+                  type="button"
+                  (click)="selectClub(club)"
+                  [disabled]="isCreatingSave()"
+                  class="flex flex-col gap-1 rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-left hover:border-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <span class="font-semibold">{{ club.name }}</span>
+                  <span class="text-xs text-slate-400">{{ club.stadiumName }}</span>
+                </button>
+              }
+            </div>
+            @if (clubs().length === 0 && !isCreatingSave()) {
+              <p class="text-slate-400">Carregando clubes...</p>
+            }
+            @if (errorMessage()) {
+              <p
+                class="rounded-lg border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200"
+              >
+                {{ errorMessage() }}
+              </p>
+            }
           </div>
-          <p *ngIf="clubs().length === 0 && !isCreatingSave()" class="text-slate-400">
-            Carregando clubes...
-          </p>
-          <p
-            *ngIf="errorMessage()"
-            class="rounded-lg border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200"
-          >
-            {{ errorMessage() }}
-          </p>
-        </div>
+        }
       </section>
     </main>
   `,

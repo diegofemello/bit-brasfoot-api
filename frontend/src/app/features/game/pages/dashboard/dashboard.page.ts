@@ -50,9 +50,11 @@ interface SaveGame {
         <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div class="flex items-center gap-4">
             <h1 class="text-xl font-bold">{{ saveGame()?.name || 'BitFoot' }}</h1>
-            <span class="text-sm text-slate-400" *ngIf="saveGame()">
-              {{ saveGame()?.currentDate }} • Temporada {{ saveGame()?.currentSeasonYear }}
-            </span>
+            @if (saveGame()) {
+              <span class="text-sm text-slate-400">
+                {{ saveGame()?.currentDate }} • Temporada {{ saveGame()?.currentSeasonYear }}
+              </span>
+            }
           </div>
           <div class="flex items-center gap-4">
             <a routerLink="/menu" class="text-sm text-slate-400 hover:text-slate-200">
@@ -63,112 +65,122 @@ interface SaveGame {
       </nav>
 
       <section class="mx-auto max-w-7xl px-6 py-8">
-        <div *ngIf="!saveGame()" class="text-center">
-          <p class="text-slate-400">Carregando...</p>
-        </div>
+        @if (!saveGame()) {
+          <div class="text-center">
+            <p class="text-slate-400">Carregando...</p>
+          </div>
+        }
 
-        <div
-          *ngIf="errorMessage()"
-          class="mb-4 rounded-lg border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-rose-200"
-        >
-          {{ errorMessage() }}
-        </div>
-
-        <div *ngIf="saveGame() && !saveGame()?.club" class="text-center">
-          <p class="text-slate-400">Nenhum clube associado a este save.</p>
-          <a
-            routerLink="/select-club"
-            class="mt-4 inline-block text-emerald-400 hover:text-emerald-300"
+        @if (errorMessage()) {
+          <div
+            class="mb-4 rounded-lg border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-rose-200"
           >
-            Selecionar Clube
-          </a>
-        </div>
+            {{ errorMessage() }}
+          </div>
+        }
 
-        <div *ngIf="club()" class="flex flex-col gap-6">
-          <!-- Informações do Clube -->
-          <div class="rounded-lg border border-slate-800 bg-slate-900 p-6">
-            <div class="mb-4 flex items-center justify-between">
-              <div>
-                <div class="flex items-center gap-3">
-                  <span class="text-3xl">{{ club()?.league?.country?.flagEmoji }}</span>
-                  <div>
-                    <h2 class="text-2xl font-bold">{{ club()?.name }}</h2>
-                    <p class="text-sm text-slate-400">
-                      {{ club()?.league?.country?.name }} • {{ club()?.league?.name }}
-                    </p>
+        @if (saveGame() && !saveGame()?.club) {
+          <div class="text-center">
+            <p class="text-slate-400">Nenhum clube associado a este save.</p>
+            <a
+              routerLink="/select-club"
+              class="mt-4 inline-block text-emerald-400 hover:text-emerald-300"
+            >
+              Selecionar Clube
+            </a>
+          </div>
+        }
+
+        @if (club()) {
+          <div class="flex flex-col gap-6">
+            <div class="rounded-lg border border-slate-800 bg-slate-900 p-6">
+              <div class="mb-4 flex items-center justify-between">
+                <div>
+                  <div class="flex items-center gap-3">
+                    <span class="text-3xl">{{ club()?.league?.country?.flagEmoji }}</span>
+                    <div>
+                      <h2 class="text-2xl font-bold">{{ club()?.name }}</h2>
+                      <p class="text-sm text-slate-400">
+                        {{ club()?.league?.country?.name }} • {{ club()?.league?.name }}
+                      </p>
+                    </div>
                   </div>
                 </div>
+                <div class="text-right">
+                  <p class="text-sm text-slate-400">Orçamento</p>
+                  <p class="text-2xl font-bold text-emerald-400">
+                    {{ formatCurrency(club()?.budget || 0) }}
+                  </p>
+                </div>
               </div>
-              <div class="text-right">
-                <p class="text-sm text-slate-400">Orçamento</p>
-                <p class="text-2xl font-bold text-emerald-400">
-                  {{ formatCurrency(club()?.budget || 0) }}
-                </p>
+              <div class="grid gap-4 sm:grid-cols-2">
+                <div class="rounded-lg bg-slate-950 px-4 py-3">
+                  <p class="text-sm text-slate-400">Estádio</p>
+                  <p class="font-semibold">{{ club()?.stadiumName }}</p>
+                  <p class="text-sm text-slate-500">
+                    Capacidade: {{ (club()?.stadiumCapacity || 0).toLocaleString() }}
+                  </p>
+                </div>
+                <div class="rounded-lg bg-slate-950 px-4 py-3">
+                  <p class="text-sm text-slate-400">Elenco</p>
+                  <p class="font-semibold">{{ players().length }} jogadores</p>
+                  <p class="text-sm text-slate-500">
+                    Overall médio: {{ calculateAverageOverall() }}
+                  </p>
+                </div>
               </div>
             </div>
-            <div class="grid gap-4 sm:grid-cols-2">
-              <div class="rounded-lg bg-slate-950 px-4 py-3">
-                <p class="text-sm text-slate-400">Estádio</p>
-                <p class="font-semibold">{{ club()?.stadiumName }}</p>
-                <p class="text-sm text-slate-500">
-                  Capacidade: {{ (club()?.stadiumCapacity || 0).toLocaleString() }}
-                </p>
-              </div>
-              <div class="rounded-lg bg-slate-950 px-4 py-3">
-                <p class="text-sm text-slate-400">Elenco</p>
-                <p class="font-semibold">{{ players().length }} jogadores</p>
-                <p class="text-sm text-slate-500">Overall médio: {{ calculateAverageOverall() }}</p>
+
+            <div class="rounded-lg border border-slate-800 bg-slate-900 p-6">
+              <h3 class="mb-4 text-xl font-bold">Elenco</h3>
+              @if (players().length === 0) {
+                <div class="text-center text-slate-400">Nenhum jogador no elenco.</div>
+              }
+              <div class="grid gap-2">
+                @for (player of players(); track player.id) {
+                  <div
+                    class="flex items-center justify-between rounded-lg bg-slate-950 px-4 py-3 hover:bg-slate-900"
+                  >
+                    <div class="flex items-center gap-4">
+                      <div
+                        class="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-800"
+                      >
+                        <span class="text-sm font-bold">{{ player.position }}</span>
+                      </div>
+                      <div>
+                        <p class="font-semibold">{{ player.name }}</p>
+                        <p class="text-sm text-slate-400">
+                          {{ player.age }} anos • {{ player.nationality }}
+                        </p>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-6">
+                      <div class="text-center">
+                        <p class="text-xs text-slate-400">OVR</p>
+                        <p
+                          class="text-lg font-bold"
+                          [class.text-emerald-400]="player.overall >= 80"
+                          [class.text-yellow-400]="player.overall >= 70 && player.overall < 80"
+                          [class.text-slate-400]="player.overall < 70"
+                        >
+                          {{ player.overall }}
+                        </p>
+                      </div>
+                      <div class="text-center">
+                        <p class="text-xs text-slate-400">POT</p>
+                        <p class="text-lg font-bold text-slate-500">{{ player.potential }}</p>
+                      </div>
+                      <div class="text-right">
+                        <p class="text-xs text-slate-400">Valor</p>
+                        <p class="text-sm font-semibold">{{ formatCurrency(player.value) }}</p>
+                      </div>
+                    </div>
+                  </div>
+                }
               </div>
             </div>
           </div>
-
-          <!-- Lista de Jogadores -->
-          <div class="rounded-lg border border-slate-800 bg-slate-900 p-6">
-            <h3 class="mb-4 text-xl font-bold">Elenco</h3>
-            <div *ngIf="players().length === 0" class="text-center text-slate-400">
-              Nenhum jogador no elenco.
-            </div>
-            <div class="grid gap-2">
-              <div
-                *ngFor="let player of players()"
-                class="flex items-center justify-between rounded-lg bg-slate-950 px-4 py-3 hover:bg-slate-900"
-              >
-                <div class="flex items-center gap-4">
-                  <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-800">
-                    <span class="text-sm font-bold">{{ player.position }}</span>
-                  </div>
-                  <div>
-                    <p class="font-semibold">{{ player.name }}</p>
-                    <p class="text-sm text-slate-400">
-                      {{ player.age }} anos • {{ player.nationality }}
-                    </p>
-                  </div>
-                </div>
-                <div class="flex items-center gap-6">
-                  <div class="text-center">
-                    <p class="text-xs text-slate-400">OVR</p>
-                    <p
-                      class="text-lg font-bold"
-                      [class.text-emerald-400]="player.overall >= 80"
-                      [class.text-yellow-400]="player.overall >= 70 && player.overall < 80"
-                      [class.text-slate-400]="player.overall < 70"
-                    >
-                      {{ player.overall }}
-                    </p>
-                  </div>
-                  <div class="text-center">
-                    <p class="text-xs text-slate-400">POT</p>
-                    <p class="text-lg font-bold text-slate-500">{{ player.potential }}</p>
-                  </div>
-                  <div class="text-right">
-                    <p class="text-xs text-slate-400">Valor</p>
-                    <p class="text-sm font-semibold">{{ formatCurrency(player.value) }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        }
       </section>
     </main>
   `,

@@ -36,7 +36,7 @@ import { UserModule } from './modules/user/user.module';
           password: config.get<string>('DB_PASSWORD', 'Diorygon@2080'),
           database: config.get<string>('DB_DATABASE', 'postgres'),
           autoLoadEntities: true,
-          synchronize: true,
+          synchronize: config.get<string>('DB_SYNCHRONIZE', 'false') === 'true',
         };
       },
     }),

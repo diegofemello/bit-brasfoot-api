@@ -52,12 +52,13 @@ interface SaveGameResponse {
           {{ isLoading() ? 'Criando...' : 'Criar e continuar' }}
         </button>
 
-        <p
-          *ngIf="errorMessage()"
-          class="rounded-lg border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200"
-        >
-          {{ errorMessage() }}
-        </p>
+        @if (errorMessage()) {
+          <p
+            class="rounded-lg border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200"
+          >
+            {{ errorMessage() }}
+          </p>
+        }
       </section>
     </main>
   `,

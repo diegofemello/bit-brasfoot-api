@@ -33,30 +33,30 @@ interface SaveGameItem {
           Atualizar lista
         </button>
 
-        <div
-          *ngIf="saveGames().length === 0"
-          class="rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 text-slate-300"
-        >
-          Nenhum save encontrado. Crie um novo jogo para começar.
-        </div>
+        @if (saveGames().length === 0) {
+          <div class="rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 text-slate-300">
+            Nenhum save encontrado. Crie um novo jogo para começar.
+          </div>
+        }
 
         <div class="grid gap-3">
-          <button
-            type="button"
-            *ngFor="let save of saveGames()"
-            (click)="selectSave(save.id)"
-            class="rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-left hover:border-emerald-400"
-          >
-            <div class="font-semibold">{{ save.name }}</div>
-            <div class="text-sm text-slate-400">
-              Temporada {{ save.currentSeasonYear }} • Data {{ save.currentDate }}
-            </div>
-          </button>
+          @for (save of saveGames(); track save.id) {
+            <button
+              type="button"
+              (click)="selectSave(save.id)"
+              class="rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-left hover:border-emerald-400"
+            >
+              <div class="font-semibold">{{ save.name }}</div>
+              <div class="text-sm text-slate-400">
+                Temporada {{ save.currentSeasonYear }} • Data {{ save.currentDate }}
+              </div>
+            </button>
+          }
         </div>
 
-        <p *ngIf="selectedSaveGameId()" class="text-sm text-emerald-300">
-          Save selecionado: {{ selectedSaveGameId() }}
-        </p>
+        @if (selectedSaveGameId()) {
+          <p class="text-sm text-emerald-300">Save selecionado: {{ selectedSaveGameId() }}</p>
+        }
       </section>
     </main>
   `,
