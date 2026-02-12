@@ -261,8 +261,13 @@ interface SimulatedRoundResponse {
                 <div class="flex items-center justify-between rounded bg-slate-950 px-3 py-2 text-sm">
                   <div class="text-xs text-slate-400">{{ fixture.matchDate }}</div>
                   <div class="font-semibold">{{ fixture.homeClub.name }} x {{ fixture.awayClub.name }}</div>
-                  <div class="text-xs" [class.text-slate-400]="fixture.status === 'scheduled'" [class.text-emerald-300]="fixture.status === 'played'">
-                    {{ fixture.status === 'scheduled' ? 'Agendado' : (fixture.homeScore + ' x ' + fixture.awayScore) }}
+                  <div class="flex items-center gap-3">
+                    <a [routerLink]="['/match-day', fixture.id]" class="text-xs text-emerald-300 hover:text-emerald-200">
+                      Dia de jogo
+                    </a>
+                    <div class="text-xs" [class.text-slate-400]="fixture.status === 'scheduled'" [class.text-emerald-300]="fixture.status === 'played'">
+                      {{ fixture.status === 'scheduled' ? 'Agendado' : (fixture.homeScore + ' x ' + fixture.awayScore) }}
+                    </div>
                   </div>
                 </div>
               }

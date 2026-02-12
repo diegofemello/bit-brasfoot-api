@@ -1,5 +1,6 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { SKIP_ERROR_NOTIFICATION } from '../interceptors/error.interceptor';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -10,6 +11,14 @@ export class ApiService {
   get<T>(path: string, params?: Record<string, string | number | boolean>) {
     const httpParams = this.toHttpParams(params);
     return this.http.get<T>(`${this.baseUrl}/${path}`, { params: httpParams });
+  }
+
+  getSilently<T>(path: string, params?: Record<string, string | number | boolean>) {
+    const httpParams = this.toHttpParams(params);
+    return this.http.get<T>(`${this.baseUrl}/${path}`, {
+      params: httpParams,
+      context: new HttpContext().set(SKIP_ERROR_NOTIFICATION, true),
+    });
   }
 
   post<T>(path: string, body: unknown) {

@@ -3,6 +3,7 @@ import { DashboardPage } from './features/game/pages/dashboard/dashboard.page';
 import { CompetitionsPage } from './features/game/pages/competitions/competitions.page';
 import { FinancesPage } from './features/game/pages/finances/finances.page';
 import { InfrastructurePage } from './features/game/pages/infrastructure/infrastructure.page';
+import { MatchDayPage } from './features/game/pages/match-day/match-day.page';
 import { PlayerDetailPage } from './features/game/pages/player-detail/player-detail.page';
 import { SquadPage } from './features/game/pages/squad/squad.page';
 import { TacticsPage } from './features/game/pages/tactics/tactics.page';
@@ -65,6 +66,10 @@ export const routes: Routes = [
   {
     path: 'competitions',
     component: CompetitionsPage,
+  },
+  {
+    path: 'match-day/:fixtureId',
+    component: MatchDayPage,
   },
   {
     path: '**',

@@ -39,6 +39,11 @@ export class CompetitionController {
     return this.competitionService.getSeasonFixtures(seasonId, query);
   }
 
+  @Get('fixtures/:fixtureId')
+  getFixtureById(@Param('fixtureId') fixtureId: string) {
+    return this.competitionService.getFixtureById(fixtureId);
+  }
+
   @Get('seasons/:seasonId/top-scorers')
   getTopScorers(@Param('seasonId') seasonId: string, @Query() query: QueryTopScorersDto) {
     return this.competitionService.getTopScorers(seasonId, query);

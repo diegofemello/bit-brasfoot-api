@@ -11,6 +11,7 @@ import { CountryModule } from './modules/country/country.module';
 import { FinanceModule } from './modules/finance/finance.module';
 import { InfrastructureModule } from './modules/infrastructure/infrastructure.module';
 import { LeagueModule } from './modules/league/league.module';
+import { MatchModule } from './modules/match/match.module';
 import { PlayerModule } from './modules/player/player.module';
 import { SaveGameModule } from './modules/save-game/save-game.module';
 import { SeasonModule } from './modules/season/season.module';
@@ -52,6 +53,7 @@ import { UserModule } from './modules/user/user.module';
     CompetitionModule,
     CountryModule,
     LeagueModule,
+    MatchModule,
     ClubModule,
     PlayerModule,
     TacticModule,

@@ -2,8 +2,16 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
 import { Club } from '../club/entities/club.entity';
+import { FinanceService } from '../finance/finance.service';
+import { TeamTactic } from '../match-engine/services/event-generator.service';
+import { SimulationService } from '../match-engine/services/simulation.service';
+import { MatchEvent } from '../match/entities/match-event.entity';
+import { MatchPlayerRating } from '../match/entities/match-player-rating.entity';
+import { MatchTimeline } from '../match/entities/match-timeline.entity';
+import { Match, MatchStatus } from '../match/entities/match.entity';
 import { Player } from '../player/entities/player.entity';
 import { SaveGame } from '../save-game/entities/save-game.entity';
+import { Tactic } from '../tactic/entities/tactic.entity';
 import { QuerySeasonFixturesDto } from './dto/query-season-fixtures.dto';
 import { QueryTopScorersDto } from './dto/query-top-scorers.dto';
 import { CompetitionSeason, CompetitionSeasonStatus } from './entities/competition-season.entity';
@@ -33,6 +41,18 @@ export class CompetitionService {
     private readonly clubRepository: Repository<Club>,
     @InjectRepository(Player)
     private readonly playerRepository: Repository<Player>,
+    @InjectRepository(Match)
+    private readonly matchRepository: Repository<Match>,
+    @InjectRepository(MatchEvent)
+    private readonly matchEventRepository: Repository<MatchEvent>,
+    @InjectRepository(MatchTimeline)
+    private readonly matchTimelineRepository: Repository<MatchTimeline>,
+    @InjectRepository(MatchPlayerRating)
+    private readonly matchPlayerRatingRepository: Repository<MatchPlayerRating>,
+    @InjectRepository(Tactic)
+    private readonly tacticRepository: Repository<Tactic>,
+    private readonly simulationService: SimulationService,
+    private readonly financeService: FinanceService,
   ) {}
 
   private async ensureSaveExists(saveGameId: string) {
@@ -102,26 +122,6 @@ export class CompetitionService {
     return [...singleLeg, ...mirrored];
   }
 
-  private clampScore(value: number) {
-    return Math.max(0, Math.min(7, Math.floor(value)));
-  }
-
-  private simulateMatchScore(homeStrength: number, awayStrength: number) {
-    const homeExpected =
-      1.3 +
-      (homeStrength - awayStrength) / 20 +
-      Math.random() * 1.4;
-    const awayExpected =
-      0.9 +
-      (awayStrength - homeStrength) / 22 +
-      Math.random() * 1.2;
-
-    return {
-      home: this.clampScore(homeExpected + Math.random() * 1.1),
-      away: this.clampScore(awayExpected + Math.random() * 1.1),
-    };
-  }
-
   private async getClubStrengthMap(clubIds: string[]) {
     const uniqueClubIds = Array.from(new Set(clubIds));
 
@@ -152,6 +152,185 @@ export class CompetitionService {
     });
 
     return strengthMap;
+  }
+
+  private defaultTactic(): TeamTactic {
+    return {
+      mentality: 'balanced',
+      pressing: 'medium',
+      tempo: 'normal',
+    };
+  }
+
+  private async getTacticBySave(saveGameId: string) {
+    const tactic = await this.tacticRepository.findOne({ where: { saveGameId } });
+    if (!tactic?.instructions) {
+      return this.defaultTactic();
+    }
+
+    return {
+      mentality: tactic.instructions.mentality,
+      pressing: tactic.instructions.pressing,
+      tempo: tactic.instructions.tempo,
+    };
+  }
+
+  private async getPlayersByClubMap(clubIds: string[]) {
+    const uniqueClubIds = Array.from(new Set(clubIds));
+    const players = await this.playerRepository.find({
+      where: { clubId: In(uniqueClubIds) },
+      order: { overall: 'DESC', potential: 'DESC', name: 'ASC' },
+    });
+
+    const playersByClub = new Map<string, Player[]>();
+    uniqueClubIds.forEach((clubId) => {
+      playersByClub.set(
+        clubId,
+        players.filter((player) => player.clubId === clubId),
+      );
+    });
+
+    return playersByClub;
+  }
+
+  private async persistMatchAndEvents(
+    fixture: Fixture,
+    playersByClub: Map<string, Player[]>,
+    saveGameId: string,
+    managedClubId: string | null,
+    homeStrength: number,
+    awayStrength: number,
+  ) {
+    const managedClubTactic = await this.getTacticBySave(saveGameId);
+    const homeTactic = fixture.homeClubId === managedClubId
+      ? managedClubTactic
+      : this.defaultTactic();
+    const awayTactic = fixture.awayClubId === managedClubId
+      ? managedClubTactic
+      : this.defaultTactic();
+
+    const homePlayers = playersByClub.get(fixture.homeClubId) ?? [];
+    const awayPlayers = playersByClub.get(fixture.awayClubId) ?? [];
+
+    const simulation = this.simulationService.simulateMatch({
+      home: {
+        clubId: fixture.homeClubId,
+        clubName: fixture.homeClub?.name ?? 'Clube mandante',
+        strength: homeStrength,
+        players: homePlayers.map((player) => ({ id: player.id, name: player.name })),
+        tactic: homeTactic,
+      },
+      away: {
+        clubId: fixture.awayClubId,
+        clubName: fixture.awayClub?.name ?? 'Clube visitante',
+        strength: awayStrength,
+        players: awayPlayers.map((player) => ({ id: player.id, name: player.name })),
+        tactic: awayTactic,
+      },
+    });
+
+    fixture.homeScore = simulation.homeScore;
+    fixture.awayScore = simulation.awayScore;
+    fixture.status = FixtureStatus.PLAYED;
+
+    let match = await this.matchRepository.findOne({ where: { fixtureId: fixture.id } });
+
+    if (!match) {
+      match = this.matchRepository.create({
+        fixtureId: fixture.id,
+        homeClubId: fixture.homeClubId,
+        awayClubId: fixture.awayClubId,
+        homeScore: simulation.homeScore,
+        awayScore: simulation.awayScore,
+        homePossession: simulation.stats.homePossession,
+        awayPossession: simulation.stats.awayPossession,
+        homeShots: simulation.stats.homeShots,
+        awayShots: simulation.stats.awayShots,
+        status: MatchStatus.FINISHED,
+        simulatedAt: new Date(),
+      });
+    } else {
+      match.homeScore = simulation.homeScore;
+      match.awayScore = simulation.awayScore;
+      match.homePossession = simulation.stats.homePossession;
+      match.awayPossession = simulation.stats.awayPossession;
+      match.homeShots = simulation.stats.homeShots;
+      match.awayShots = simulation.stats.awayShots;
+      match.status = MatchStatus.FINISHED;
+      match.simulatedAt = new Date();
+    }
+
+    const savedMatch = await this.matchRepository.save(match);
+
+    await this.matchEventRepository.delete({ matchId: savedMatch.id });
+    await this.matchTimelineRepository.delete({ matchId: savedMatch.id });
+    await this.matchPlayerRatingRepository.delete({ matchId: savedMatch.id });
+
+    const homePlayerByName = new Map(homePlayers.map((player) => [player.name, player]));
+    const awayPlayerByName = new Map(awayPlayers.map((player) => [player.name, player]));
+
+    if (simulation.events.length > 0) {
+      await this.matchEventRepository.save(
+        simulation.events.map((event) => {
+          const mappedPlayer =
+            event.team === 'home'
+              ? homePlayerByName.get(event.playerName ?? '')
+              : awayPlayerByName.get(event.playerName ?? '');
+
+          return {
+            matchId: savedMatch.id,
+            minute: event.minute,
+            type: event.type,
+            clubId: event.team === 'home' ? fixture.homeClubId : fixture.awayClubId,
+            playerId: mappedPlayer?.id ?? null,
+            description: event.description,
+          };
+        }),
+      );
+    }
+
+    if (simulation.timeline.length > 0) {
+      await this.matchTimelineRepository.save(
+        simulation.timeline.map((minuteState) => ({
+          matchId: savedMatch.id,
+          minute: minuteState.minute,
+          homeScore: minuteState.homeScore,
+          awayScore: minuteState.awayScore,
+          commentary: minuteState.commentary,
+        })),
+      );
+    }
+
+    if (simulation.ratings.length > 0) {
+      await this.matchPlayerRatingRepository.save(
+        simulation.ratings
+          .map((rating) => {
+            const homePlayer = homePlayerByName.get(rating.playerName);
+            const awayPlayer = awayPlayerByName.get(rating.playerName);
+            const player = homePlayer ?? awayPlayer;
+            if (!player?.clubId) {
+              return null;
+            }
+
+            return {
+              matchId: savedMatch.id,
+              playerId: player.id,
+              clubId: player.clubId,
+              rating: rating.rating,
+            };
+          })
+          .filter((item): item is { matchId: string; playerId: string; clubId: string; rating: number } => item !== null),
+      );
+    }
+
+    const attendance = Math.max(5000, Math.floor((fixture.homeClub?.stadiumCapacity ?? 30000) * (0.55 + Math.random() * 0.35)));
+
+    await this.financeService.registerTicketIncome({
+      saveGameId,
+      attendance,
+      ticketPrice: 45,
+      matchLabel: `${fixture.homeClub?.name ?? 'Mandante'} x ${fixture.awayClub?.name ?? 'Visitante'}`,
+    });
   }
 
   private async recalculateStandingPositions(
@@ -645,11 +824,59 @@ export class CompetitionService {
     }));
   }
 
-  async simulateRound(seasonId: string, round?: number) {
-    const season = await this.seasonRepository.findOne({ where: { id: seasonId } });
+  async simulateFixtureById(fixtureId: string) {
+    const fixture = await this.fixtureRepository.findOne({
+      where: { id: fixtureId },
+      relations: ['homeClub', 'awayClub'],
+    });
+
+    if (!fixture) {
+      throw new NotFoundException('Fixture não encontrado');
+    }
+
+    if (fixture.status === FixtureStatus.PLAYED) {
+      throw new BadRequestException('Partida já simulada');
+    }
+
+    const season = await this.seasonRepository.findOne({ where: { id: fixture.seasonId } });
     if (!season) {
       throw new NotFoundException('Temporada da competição não encontrada');
     }
+
+    const save = await this.ensureSaveExists(season.saveGameId);
+
+    const clubStrength = await this.getClubStrengthMap([fixture.homeClubId, fixture.awayClubId]);
+    const playersByClub = await this.getPlayersByClubMap([fixture.homeClubId, fixture.awayClubId]);
+
+    await this.persistMatchAndEvents(
+      fixture,
+      playersByClub,
+      season.saveGameId,
+      save.clubId,
+      clubStrength.get(fixture.homeClubId) ?? 70,
+      clubStrength.get(fixture.awayClubId) ?? 70,
+    );
+
+    await this.fixtureRepository.save(fixture);
+    await this.applyFixtureResultToStandings(fixture);
+
+    return {
+      fixtureId: fixture.id,
+      seasonId: fixture.seasonId,
+      homeScore: fixture.homeScore,
+      awayScore: fixture.awayScore,
+      status: fixture.status,
+    };
+  }
+
+  async simulateRound(seasonId: string, round?: number) {
+    const season = await this.seasonRepository.findOne({ where: { id: seasonId } });
+
+    if (!season) {
+      throw new NotFoundException('Temporada da competição não encontrada');
+    }
+
+    const save = await this.ensureSaveExists(season.saveGameId);
 
     if (season.status === CompetitionSeasonStatus.FINISHED) {
       throw new BadRequestException('Temporada já finalizada');
@@ -666,6 +893,7 @@ export class CompetitionService {
         round: roundToSimulate,
         status: FixtureStatus.SCHEDULED,
       },
+      relations: ['homeClub', 'awayClub'],
       order: {
         matchDate: 'ASC',
       },
@@ -678,16 +906,20 @@ export class CompetitionService {
     const clubStrength = await this.getClubStrengthMap(
       fixtures.flatMap((fixture) => [fixture.homeClubId, fixture.awayClubId]),
     );
+    const playersByClub = await this.getPlayersByClubMap(
+      fixtures.flatMap((fixture) => [fixture.homeClubId, fixture.awayClubId]),
+    );
 
-    fixtures.forEach((fixture) => {
-      const homeStrength = clubStrength.get(fixture.homeClubId) ?? 70;
-      const awayStrength = clubStrength.get(fixture.awayClubId) ?? 70;
-      const score = this.simulateMatchScore(homeStrength, awayStrength);
-
-      fixture.homeScore = score.home;
-      fixture.awayScore = score.away;
-      fixture.status = FixtureStatus.PLAYED;
-    });
+    for (const fixture of fixtures) {
+      await this.persistMatchAndEvents(
+        fixture,
+        playersByClub,
+        season.saveGameId,
+        save.clubId,
+        clubStrength.get(fixture.homeClubId) ?? 70,
+        clubStrength.get(fixture.awayClubId) ?? 70,
+      );
+    }
 
     await this.fixtureRepository.save(fixtures);
 
@@ -768,6 +1000,19 @@ export class CompetitionService {
       data: fixtures,
       availableRounds: rounds.map((item) => Number(item.round)),
     };
+  }
+
+  async getFixtureById(fixtureId: string) {
+    const fixture = await this.fixtureRepository.findOne({
+      where: { id: fixtureId },
+      relations: ['homeClub', 'awayClub', 'season'],
+    });
+
+    if (!fixture) {
+      throw new NotFoundException('Fixture não encontrado');
+    }
+
+    return fixture;
   }
 
   async getTopScorers(seasonId: string, query: QueryTopScorersDto) {
