@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { PaginatedResult } from '../../../../core/models/paginated-result.model';
 import { ApiService } from '../../../../core/services/api.service';
@@ -54,9 +54,7 @@ interface SaveGameResponse {
               <span class="font-semibold">{{ country.name }}</span>
             </button>
           </div>
-          <p *ngIf="countries().length === 0" class="text-slate-400">
-            Carregando países...
-          </p>
+          <p *ngIf="countries().length === 0" class="text-slate-400">Carregando países...</p>
         </div>
 
         <!-- Passo 2: Selecionar Liga -->
@@ -82,9 +80,7 @@ interface SaveGameResponse {
               <span class="text-sm text-slate-400">Divisão {{ league.division }}</span>
             </button>
           </div>
-          <p *ngIf="leagues().length === 0" class="text-slate-400">
-            Carregando ligas...
-          </p>
+          <p *ngIf="leagues().length === 0" class="text-slate-400">Carregando ligas...</p>
         </div>
 
         <!-- Passo 3: Selecionar Clube -->
@@ -145,11 +141,9 @@ export class SelectClubPage {
   }
 
   loadCountries() {
-    this.apiService
-      .get<PaginatedResult<Country>>('countries', { page: 1, limit: 50 })
-      .subscribe({
-        next: (result) => this.countries.set(result.data),
-      });
+    this.apiService.get<PaginatedResult<Country>>('countries', { page: 1, limit: 50 }).subscribe({
+      next: (result) => this.countries.set(result.data),
+    });
   }
 
   selectCountry(country: Country) {

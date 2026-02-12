@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { PaginationDto } from '../../common/dto/pagination.dto';
-import { CreateClubDto } from './dto/create-club.dto';
 import { ClubService } from './club.service';
+import { CreateClubDto } from './dto/create-club.dto';
 
 @ApiTags('clubs')
 @Controller('clubs')

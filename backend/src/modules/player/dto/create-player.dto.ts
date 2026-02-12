@@ -1,4 +1,20 @@
-import { IsEnum, IsInt, IsString, IsUUID, Length, Max, Min } from 'class-validator';
+import {
+ 
+ 
+ 
+ 
+ 
+ 
+ ,
+
+  IsEnum,
+  IsInt,
+  IsString,
+  IsUUID,
+  Length,
+  Max,
+  Min,
+} from 'class-validator';
 import { PlayerPosition } from '../entities/player.entity';
 
 export class CreatePlayerDto {

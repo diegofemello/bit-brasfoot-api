@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { BaseCrudService } from '../../common/services/base-crud.service';
-import { Player } from './entities/player.entity';
 import { CreatePlayerDto } from './dto/create-player.dto';
+import { Player } from './entities/player.entity';
 
 @Injectable()
 export class PlayerService extends BaseCrudService<Player> {

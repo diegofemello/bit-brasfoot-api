@@ -1,15 +1,15 @@
 import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
+    Column,
+    CreateDateColumn,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
 } from 'typeorm';
-import { Country } from '../../country/entities/country.entity';
 import { Club } from '../../club/entities/club.entity';
+import { Country } from '../../country/entities/country.entity';
 
 @Entity({ name: 'leagues' })
 export class League {

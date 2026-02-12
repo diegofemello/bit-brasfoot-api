@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { BaseCrudService } from '../../common/services/base-crud.service';
-import { Club } from './entities/club.entity';
 import { CreateClubDto } from './dto/create-club.dto';
+import { Club } from './entities/club.entity';
 
 @Injectable()
 export class ClubService extends BaseCrudService<Club> {

@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { ClubService } from '../club/club.service';
 import { CountryService } from '../country/country.service';
 import { LeagueService } from '../league/league.service';
-import { PlayerService } from '../player/player.service';
 import { PlayerPosition } from '../player/entities/player.entity';
+import { PlayerService } from '../player/player.service';
 
 @Injectable()
 export class SeedService implements OnModuleInit {

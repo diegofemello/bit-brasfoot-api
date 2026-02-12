@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { PaginationDto } from '../../common/dto/pagination.dto';
-import { CreateCountryDto } from './dto/create-country.dto';
 import { CountryService } from './country.service';
+import { CreateCountryDto } from './dto/create-country.dto';
 
 @ApiTags('countries')
 @Controller('countries')
