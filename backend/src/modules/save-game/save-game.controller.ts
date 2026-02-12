@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -11,6 +12,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { AssignClubDto } from './dto/assign-club.dto';
 import { CreateSaveGameDto } from './dto/create-save-game.dto';
+import { UpdateSaveGameDto } from './dto/update-save-game.dto';
 import { SaveGameService } from './save-game.service';
 
 @ApiTags('save-games')
@@ -38,5 +40,15 @@ export class SaveGameController {
   @Patch(':id/club')
   assignClub(@Param('id') id: string, @Body() payload: AssignClubDto) {
     return this.saveGameService.assignClub(id, payload);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() payload: UpdateSaveGameDto) {
+    return this.saveGameService.updateSave(id, payload);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.saveGameService.removeSave(id);
   }
 }
