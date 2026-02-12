@@ -8,8 +8,10 @@ import {
 } from 'class-validator';
 
 export class CreateSaveGameDto {
+  // TODO: Na Fase 1, userId virá do token de autenticação, não do body
+  @IsOptional()
   @IsUUID()
-  userId: string;
+  userId?: string;
 
   @IsString()
   @Length(2, 100)

@@ -16,8 +16,10 @@ export class SaveGameService extends BaseCrudService<SaveGame> {
   }
 
   createSave(payload: CreateSaveGameDto) {
+    // TODO: Na Fase 1, userId virá do contexto de autenticação (token)
+    // Por enquanto, aceita userId opcional para testes sem autenticação
     return this.create({
-      userId: payload.userId,
+      userId: payload.userId ?? null, // Será obrigatório na Fase 1
       name: payload.name,
       currentDate: new Date().toISOString().slice(0, 10),
       currentSeasonYear: payload.currentSeasonYear ?? new Date().getFullYear(),
@@ -25,9 +27,8 @@ export class SaveGameService extends BaseCrudService<SaveGame> {
     });
   }
 
-  listByUser(userId: string, pagination: PaginationDto) {
+  listAll(pagination: PaginationDto) {
     return this.findPaginated(pagination, {
-      where: { userId },
       order: { createdAt: 'DESC' },
     });
   }

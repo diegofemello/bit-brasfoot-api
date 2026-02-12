@@ -73,16 +73,11 @@ export class LoadGamePage {
   }
 
   load() {
-    const userId = this.gameState.selectedUserId();
-    if (!userId) {
-      this.saveGames.set([]);
-      return;
-    }
-
     this.apiService
-      .get<PaginatedResult<SaveGameItem>>(`save-games/user/${userId}`, { page: 1, limit: 20 })
+      .get<PaginatedResult<SaveGameItem>>('save-games', { page: 1, limit: 20 })
       .subscribe({
         next: (result) => this.saveGames.set(result.data),
+        error: () => this.saveGames.set([]),
       });
   }
 

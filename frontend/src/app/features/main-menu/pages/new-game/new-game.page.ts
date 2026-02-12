@@ -79,13 +79,15 @@ export class NewGamePage {
     this.errorMessage.set(null);
     this.isLoading.set(true);
 
+    // TODO: Na Fase 1, com autenticação, não será necessário criar User aqui
+    // O userId virá do token de acesso automaticamente no backend
     this.apiService.post<UserResponse>('users', { managerName: managerName.trim() }).subscribe({
       next: (user) => {
         this.gameState.selectUser(user.id);
 
+        // Não envia userId - na Fase 1 virá do token de autenticação
         this.apiService
           .post<SaveGameResponse>('save-games', {
-            userId: user.id,
             name: saveName.trim(),
           })
           .subscribe({

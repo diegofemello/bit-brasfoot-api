@@ -14,14 +14,16 @@ export class SaveGame {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ name: 'user_id' })
-  userId!: string;
+  // TODO: Na Fase 1, tornar obrigatório novamente (remover nullable)
+  @Column({ name: 'user_id', nullable: true })
+  userId!: string | null;
 
   @ManyToOne(() => User, {
     onDelete: 'CASCADE',
+    nullable: true,
   })
   @JoinColumn({ name: 'user_id' })
-  user!: User;
+  user!: User | null;
 
   @Column({ length: 100 })
   name!: string;
