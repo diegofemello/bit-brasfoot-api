@@ -60,6 +60,8 @@ O **BitFoot** é uma aplicação web inspirada no Brasfoot — um simulador de g
 | **@nestjs/swagger**       | latest | Documentação OpenAPI/Swagger     |
 | **@nestjs/config**        | latest | Variáveis de ambiente            |
 | **@nestjs/throttler**     | latest | Rate limiting                    |
+| **@nestjs/websockets**    | latest | Gateway realtime da partida      |
+| **socket.io**             | 4.x    | Transporte realtime bidirecional |
 | **@nestjs/cache-manager** | latest | Cache em memória                 |
 | **uuid**                  | latest | Geração de IDs                   |
 | **seed/faker**            | latest | Dados de seed (jogadores, times) |
@@ -75,14 +77,15 @@ O **BitFoot** é uma aplicação web inspirada no Brasfoot — um simulador de g
 | **Angular Router**  | built-in | Navegação e guards          |
 | **HttpClient**      | built-in | Comunicação com API         |
 | **RxJS**            | 7.x      | Streams reativos            |
-| **ngx-translate**   | latest   | Internacionalização (pt-BR) |
-| **Angular CDK**     | 21.x     | Drag & drop, overlays       |
+| **socket.io-client**| 4.x      | Realtime no Match Day       |
+| **ngx-translate**   | latest   | Internacionalização (pt-BR) — planejado |
+| **Angular CDK**     | 21.x     | Drag & drop, overlays — planejado       |
 
 ### Ferramentas de Desenvolvimento
 
 | Ferramenta              | Uso                         |
 | ----------------------- | --------------------------- |
-| **ESLint**              | Linting (ambos projetos)    |
+| **ESLint**              | Linting (backend; frontend pendente) |
 | **Prettier**            | Formatação de código        |
 | **Husky + lint-staged** | Git hooks para qualidade    |
 | **Jest**                | Testes unitários (backend)  |
@@ -720,10 +723,11 @@ Menu Principal → Novo Jogo / Carregar
 
 ### 4.3 Padrão de Comunicação
 
-- **Frontend → Backend:** REST API com JSON via `HttpClient`
+- **Frontend → Backend (dados de domínio):** REST API com JSON via `HttpClient`
+- **Frontend ↔ Backend (partida ao vivo):** WebSocket (Socket.IO) no namespace `/match-live`
 - **Sessão local (fase atual):** Sem autenticação; foco total no fluxo de jogo
 - **Estado do jogo:** Persistido no PostgreSQL. O frontend consulta o estado via API.
-- **Simulação de partida:** Executada no backend (match engine). O frontend recebe os eventos da partida e renderiza progressivamente.
+- **Simulação de partida:** Executada no backend (match engine + serviço realtime). O frontend recebe o estado/eventos ao vivo e renderiza progressivamente.
 
 ---
 
@@ -1487,32 +1491,34 @@ Para cada clube (fim de temporada):
 
 ### Fase 0 — Setup e Fundação (Sprint 1-2) — ~2 semanas
 
+> Status revisado em 13/02/2026 com base no código atual.
+
 **Backend:**
 
-- [ ] Inicializar projeto NestJS 11 com TypeScript
-- [ ] Configurar TypeORM com PostgreSQL
-- [ ] Configurar ESLint + Prettier
-- [ ] Configurar Swagger
-- [ ] Implementar module structure base
-- [ ] Criar helpers comuns (filters, pipes, interceptors, guards)
-- [ ] Implementar módulo User
-- [ ] Implementar sessão local sem autenticação (single-manager)
-- [ ] Criar camadas genéricas reutilizáveis (BaseRepository, BaseCrudService, paginação)
-- [ ] Criar entidades base: User, SaveGame
-- [ ] Primeiro migration
+- [x] Inicializar projeto NestJS 11 com TypeScript
+- [x] Configurar TypeORM com PostgreSQL
+- [x] Configurar ESLint + Prettier
+- [x] Configurar Swagger
+- [x] Implementar module structure base
+- [x] Criar helpers comuns (filters, pipes, interceptors, guards)
+- [x] Implementar módulo User
+- [x] Implementar sessão local sem autenticação (single-manager)
+- [x] Criar camadas genéricas reutilizáveis (BaseRepository, BaseCrudService, paginação)
+- [x] Criar entidades base: User, SaveGame
+- [x] Primeiro migration
 
 **Frontend:**
 
-- [ ] Inicializar projeto Angular 21 (standalone)
-- [ ] Configurar Tailwind CSS 4
-- [ ] Configurar ESLint + Prettier
-- [ ] Criar estrutura de pastas (core, shared, features)
-- [ ] Implementar layout base (app shell)
-- [ ] Criar componentes shared base (header, sidebar, loading, toast)
-- [ ] Implementar serviço de API (HttpClient + interceptors)
-- [ ] Implementar sessão local sem autenticação (seleção direta de save)
-- [ ] Criar componentes e serviços genéricos reutilizáveis
-- [ ] Configurar routing base
+- [x] Inicializar projeto Angular 21 (standalone)
+- [x] Configurar Tailwind CSS 4
+- [x] Configurar ESLint + Prettier
+- [x] Criar estrutura de pastas (core, shared, features)
+- [x] Implementar layout base (app shell)
+- [x] Criar componentes shared base (header, sidebar, loading, toast)
+- [x] Implementar serviço de API (HttpClient + interceptors)
+- [x] Implementar sessão local sem autenticação (seleção direta de save)
+- [x] Criar componentes e serviços genéricos reutilizáveis
+- [x] Configurar routing base
 
 **Entregável:** Base funcional sem autenticação, com estrutura reutilizável nos dois lados
 
@@ -1522,21 +1528,21 @@ Para cada clube (fim de temporada):
 
 **Backend:**
 
-- [ ] Criar entidades: Country, League, Club, Player
-- [ ] Criar endpoints CRUD para countries, leagues, clubs
-- [ ] Criar endpoints para players com busca avançada e paginação
-- [ ] Implementar módulo SaveGame completo
-- [ ] Criar seeds de dados: países (Brasil + 5-10 países), ligas, clubes, jogadores
-- [ ] Implementar sistema de criação de novo jogo (copia seed → save)
-- [ ] Migrations
+- [x] Criar entidades: Country, League, Club, Player
+- [x] Criar endpoints CRUD para countries, leagues, clubs
+- [x] Criar endpoints para players com busca avançada e paginação
+- [x] Implementar módulo SaveGame completo
+- [x] Criar seeds de dados: países (Brasil + 5-10 países), ligas, clubes, jogadores
+- [x] Implementar sistema de criação de novo jogo (copia seed → save)
+- [x] Migrations
 
 **Frontend:**
 
-- [ ] Tela de Menu Principal
-- [ ] Fluxo de Novo Jogo (seleção de país → liga → clube)
-- [ ] Tela de carregar save
-- [ ] Implementar GameStateService com Signals
-- [ ] Design do layout do jogo (sidebar com navegação)
+- [x] Tela de Menu Principal
+- [x] Fluxo de Novo Jogo (seleção de país → liga → clube)
+- [x] Tela de carregar save
+- [x] Implementar GameStateService com Signals
+- [x] Design do layout do jogo (navegação principal)
 
 **Entregável:** Criar novo jogo, selecionar clube, visualizar dados iniciais
 
@@ -1546,22 +1552,22 @@ Para cada clube (fim de temporada):
 
 **Backend:**
 
-- [ ] Implementar módulo Club completo
-- [ ] Implementar módulo Player com filtros e stats
-- [ ] Implementar módulo Tactic (CRUD, formações, posições)
-- [ ] Implementar módulo Finance (saldo, transações, ticket)
-- [ ] Implementar módulo Infrastructure (upgrade, custos, impacto)
-- [ ] Validações de negócio (saldo suficiente para upgrade, etc.)
+- [x] Implementar módulo Club completo
+- [x] Implementar módulo Player com filtros e stats
+- [x] Implementar módulo Tactic (CRUD, formações, posições)
+- [x] Implementar módulo Finance (saldo, transações, ticket)
+- [x] Implementar módulo Infrastructure (upgrade, custos, impacto)
+- [x] Validações de negócio (saldo suficiente para upgrade, etc.)
 
 **Frontend:**
 
-- [ ] Dashboard do clube com resumo
-- [ ] Lista do elenco com tabela ordenável e filtros
-- [ ] Tela de detalhes do jogador (atributos, histórico)
-- [ ] Editor de táticas com campo 2D e drag & drop
-- [ ] Seletor de formação visual
-- [ ] Painel de finanças com gráficos
-- [ ] Tela de infraestrutura com cards de upgrade
+- [x] Dashboard do clube com resumo
+- [x] Lista do elenco com tabela ordenável e filtros
+- [x] Tela de detalhes do jogador (atributos, histórico)
+- [x] Editor de táticas com campo 2D e drag & drop
+- [x] Seletor de formação visual
+- [x] Painel de finanças com gráficos
+- [x] Tela de infraestrutura com cards de upgrade
 
 **Entregável:** Gerenciamento completo do clube (elenco, tática, finanças, estrutura)
 
@@ -1571,22 +1577,22 @@ Para cada clube (fim de temporada):
 
 **Backend:**
 
-- [ ] Implementar módulo Transfer completo
-- [ ] Sistema de propostas (criar, aceitar, rejeitar, contraproposta)
-- [ ] Transferências: compra, venda, empréstimo, troca, liberação
-- [ ] Validações de valor, saldo, limite de elenco
-- [ ] Endpoint de jouadores livres (free agents)
-- [ ] Listar/remover da lista de transferências
+- [x] Implementar módulo Transfer completo
+- [x] Sistema de propostas (criar, aceitar, rejeitar, contraproposta)
+- [x] Transferências: compra, venda, empréstimo, troca, liberação
+- [x] Validações de valor, saldo, limite de elenco
+- [x] Endpoint de jogadores livres (free agents)
+- [x] Listar/remover da lista de transferências
 
 **Frontend:**
 
-- [ ] Mercado de transferências com busca e filtros avançados
-- [ ] Lista de jogadores disponíveis
-- [ ] Modal de proposta (valor, tipo, detalhes)
-- [ ] Tela de negociações em andamento (enviadas e recebidas)
-- [ ] Histórico de transferências
-- [ ] Lista de jogadores livres
-- [ ] Feedback visual de status (aceito, rejeitado, pendente)
+- [x] Mercado de transferências com busca e filtros avançados
+- [x] Lista de jogadores disponíveis
+- [x] Painel de proposta (valor, tipo, detalhes)
+- [x] Tela de negociações em andamento (enviadas e recebidas)
+- [x] Histórico de transferências
+- [x] Lista de jogadores livres
+- [x] Feedback visual de status (aceito, rejeitado, pendente)
 
 **Entregável:** Sistema de transferências funcional completo
 
@@ -1635,6 +1641,10 @@ Para cada clube (fim de temporada):
 - [x] Atualizar standings, stats dos jogadores
 - [x] Atualizar finanças (bilheteria)
 - [x] Implementar módulo Match completo com eventos persistidos
+- [x] Implementar realtime de partida via WebSocket (Gateway `/match-live`)
+- [x] Processar controles de transmissão no backend (start/pause/resume/step/reset/speed)
+- [x] Sincronizar ações do técnico em tempo real e persistir no histórico da partida
+- [x] Garantir nova sessão limpa ao iniciar partida (sem reaproveitar eventos antigos)
 
 **Frontend:**
 
@@ -1647,6 +1657,7 @@ Para cada clube (fim de temporada):
 - [x] Timeline de eventos
 - [x] Tela de pós-jogo (resultado, estatísticas, notas, destaques)
 - [x] Transição animada entre minutos
+- [x] Integração realtime via Socket.IO para estado da partida ao vivo
 
 **Entregável:** Simulação de partidas completa com interação ao vivo
 

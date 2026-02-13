@@ -5,7 +5,8 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "watch": "ng build --watch --configuration development"
+    "watch": "ng build --watch --configuration development",
+    "lint": "eslint \"src/**/*.ts\""
   },
   "prettier": {
     "printWidth": 100,
@@ -36,9 +37,13 @@
     "tslib": "^2.8.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@angular/build": "^21.1.4",
     "@angular/cli": "^21.1.4",
     "@angular/compiler-cli": "^21.1.4",
+    "eslint": "^9.39.2",
+    "globals": "^17.3.0",
+    "typescript-eslint": "^8.55.0",
     "typescript": "~5.9.3"
   }
 }

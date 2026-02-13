@@ -9,11 +9,6 @@ interface UserResponse {
   managerName: string;
 }
 
-interface SaveGameResponse {
-  id: string;
-  name: string;
-}
-
 @Component({
   selector: 'app-new-game-page',
   imports: [CommonModule],
