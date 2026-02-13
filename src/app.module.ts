@@ -5,6 +5,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { CareerModule } from './modules/career/career.module';
 import { ClubModule } from './modules/club/club.module';
 import { CompetitionModule } from './modules/competition/competition.module';
 import { CountryModule } from './modules/country/country.module';
@@ -54,6 +55,7 @@ import { UserModule } from './modules/user/user.module';
     CountryModule,
     LeagueModule,
     MatchModule,
+    CareerModule,
     ClubModule,
     PlayerModule,
     TacticModule,

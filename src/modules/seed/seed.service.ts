@@ -142,9 +142,10 @@ export class SeedService implements OnModuleInit {
           for (let playerIndex = 0; playerIndex < playerTemplates.length; playerIndex++) {
             const template = playerTemplates[playerIndex];
             const base = clubIndex * 4 + playerIndex + 1;
+            const ageByTemplate = [23, 27, 31, 34];
             await this.playerService.createPlayer({
               name: `${club.abbreviation} Player ${base}`,
-              age: 20 + ((clubIndex + playerIndex) % 12),
+              age: ageByTemplate[playerIndex] ?? 27,
               nationality: worldItem.country.code,
               position: template.position,
               overall: template.overall + (playerIndex % 2),
