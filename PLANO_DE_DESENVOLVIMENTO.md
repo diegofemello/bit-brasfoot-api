@@ -1704,19 +1704,19 @@ Para cada clube (fim de temporada):
 
 **Backend:**
 
-- [ ] IA de transferências para clubes não gerenciados
-- [ ] Clubes da IA avaliam elenco e fazem contratações
+- [x] IA de transferências para clubes não gerenciados
+- [x] Clubes da IA avaliam elenco e fazem contratações
 - [x] Geração automática de propostas (para o jogador e entre clubes)
-- [ ] IA aceita/rejeita propostas baseada em critérios lógicos
-- [ ] Rotação de elenco da IA (substituir jogadores velhos)
-- [ ] Propostas de emprego (outros clubes convidam o manager)
+- [x] IA aceita/rejeita propostas baseada em critérios lógicos
+- [x] Rotação de elenco da IA (substituir jogadores velhos)
+- [x] Propostas de emprego (outros clubes convidam o manager)
 - [x] Endpoint para executar ciclo de IA de transferências (`POST /transfers/ai/run`)
 
 **Frontend:**
 
-- [ ] Notificações de propostas automáticas recebidas
-- [ ] Feed de notícias sobre transferências de outros clubes
-- [ ] Propostas de emprego com detalhes do clube
+- [x] Notificações de propostas automáticas recebidas
+- [x] Feed de notícias sobre transferências de outros clubes
+- [x] Propostas de emprego com detalhes do clube
 
 **Entregável:** IA funcional gerenciando clubes adversários
 

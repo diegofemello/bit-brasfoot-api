@@ -286,6 +286,7 @@ export class MatchDayPage {
   readonly liveState = this.matchLiveSocket.state;
 
   private fixtureStatusInitialized = false;
+  private finalSyncCompletedForFixtureId: string | null = null;
 
   readonly timelineScrollEffect = effect(() => {
     const minute = this.visibleMinute();
@@ -317,8 +318,18 @@ export class MatchDayPage {
       }
 
       if (state.minute >= 90) {
+        if (this.finalSyncCompletedForFixtureId === fixtureId) {
+          return;
+        }
+
+        this.finalSyncCompletedForFixtureId = fixtureId;
         this.loadDetail(fixtureId, false);
         this.loadFixture(fixtureId);
+        return;
+      }
+
+      if (this.finalSyncCompletedForFixtureId === fixtureId) {
+        this.finalSyncCompletedForFixtureId = null;
       }
     });
   }
@@ -328,6 +339,7 @@ export class MatchDayPage {
     if (!fixtureId) return;
 
     this.loadStoredPlan(fixtureId);
+    this.finalSyncCompletedForFixtureId = null;
     this.loadFixture(fixtureId);
 
     this.matchLiveSocket.joinMatch(fixtureId);
@@ -707,6 +719,7 @@ export class MatchDayPage {
 
     this.matchLiveSocket.control(fixtureId, 'reset');
     this.sessionStarted.set(false);
+    this.finalSyncCompletedForFixtureId = null;
   }
 
   setPlaybackSpeed(value: number) {
@@ -722,6 +735,7 @@ export class MatchDayPage {
     if (!fixtureId) return;
 
     this.readOnlyMode.set(false);
+    this.finalSyncCompletedForFixtureId = null;
     this.simulating.set(true);
     this.matchLiveSocket.control(fixtureId, 'start');
     this.sessionStarted.set(true);

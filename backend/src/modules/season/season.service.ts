@@ -7,6 +7,7 @@ import { CompetitionSeason } from '../competition/entities/competition-season.en
 import { Fixture, FixtureStatus } from '../competition/entities/fixture.entity';
 import { Player } from '../player/entities/player.entity';
 import { SaveGame } from '../save-game/entities/save-game.entity';
+import { TransferService } from '../transfer/transfer.service';
 import { RenewContractDto } from './dto/renew-contract.dto';
 import { PlayerAgingService } from './services/player-aging.service';
 import { PlayerEvolutionService } from './services/player-evolution.service';
@@ -33,6 +34,7 @@ export class SeasonService {
     private readonly retirementService: RetirementService,
     private readonly promotionRelegationService: PromotionRelegationService,
     private readonly youthAcademyService: YouthAcademyService,
+    private readonly transferService: TransferService,
   ) {}
 
   private toDateIso(value: Date) {
@@ -251,10 +253,37 @@ export class SeasonService {
     save.currentDate = this.toDateIso(current);
     await this.saveGameRepository.save(save);
 
+    let aiTransfers = {
+      createdOffers: 0,
+      resolvedOffers: 0,
+      message: 'Ciclo IA não executado.',
+    };
+
+    if (save.clubId) {
+      try {
+        const result = await this.transferService.runAiTransferCycle({
+          saveGameId,
+          offers: 4,
+        });
+        aiTransfers = {
+          createdOffers: result.createdOffers,
+          resolvedOffers: result.resolvedOffers,
+          message: 'Ciclo IA executado com sucesso.',
+        };
+      } catch {
+        aiTransfers = {
+          createdOffers: 0,
+          resolvedOffers: 0,
+          message: 'Ciclo IA indisponível neste avanço de dia.',
+        };
+      }
+    }
+
     return {
       saveId: save.id,
       currentDate: save.currentDate,
       seasonYear: save.currentSeasonYear,
+      aiTransfers,
     };
   }
 

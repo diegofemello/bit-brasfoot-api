@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CompetitionModule } from '../competition/competition.module';
+import { TransferModule } from '../transfer/transfer.module';
 import { Club } from '../club/entities/club.entity';
 import { CompetitionSeason } from '../competition/entities/competition-season.entity';
 import { Fixture } from '../competition/entities/fixture.entity';
@@ -18,6 +19,7 @@ import { SeasonService } from './season.service';
   imports: [
     TypeOrmModule.forFeature([SaveGame, Player, Club, Fixture, CompetitionSeason]),
     CompetitionModule,
+    TransferModule,
   ],
   controllers: [SeasonController],
   providers: [

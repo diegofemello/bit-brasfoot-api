@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { PaginatedResult } from '../../../../core/models/paginated-result.model';
 import { ApiService } from '../../../../core/services/api.service';
 import { GameStateService } from '../../../../core/services/game-state.service';
+import { NotificationService } from '../../../../core/services/notification.service';
 
 interface Club {
   id: string;
@@ -52,6 +53,37 @@ interface InfrastructureState {
   youthLevel: number;
   medicalLevel: number;
   stadiumLevel: number;
+}
+
+interface TransferProposalNotification {
+  id: string;
+  type: 'purchase' | 'sale' | 'loan' | 'swap' | 'release';
+  amount: number | null;
+  status: 'pending' | 'accepted' | 'rejected' | 'countered' | 'canceled';
+  player: { name: string };
+  fromClub: { name: string } | null;
+  toClub: { name: string } | null;
+}
+
+interface TransferNews {
+  id: string;
+  headline: string;
+  status: 'accepted' | 'rejected' | 'countered';
+  amount: number | null;
+  updatedAt: string;
+}
+
+interface JobOffer {
+  id: string;
+  clubId: string;
+  clubName: string;
+  leagueName: string;
+  countryName: string;
+  stadiumName: string;
+  budget: number;
+  monthlySalaryOffer: number;
+  projectScore: number;
+  rationale: string;
 }
 
 @Component({
@@ -247,6 +279,63 @@ interface InfrastructureState {
               </div>
             }
 
+            <div class="grid gap-4 lg:grid-cols-3">
+              <div class="rounded-lg border border-slate-800 bg-slate-900 p-4">
+                <h3 class="mb-2 text-sm font-semibold text-slate-300">Propostas automáticas recebidas</h3>
+                <p class="mb-2 text-xs text-slate-400">Pendentes: {{ incomingAutoProposals().length }}</p>
+                <div class="space-y-2">
+                  @for (proposal of incomingAutoProposals().slice(0, 5); track proposal.id) {
+                    <div class="rounded bg-slate-950 px-3 py-2 text-xs">
+                      <p class="font-semibold text-slate-200">{{ proposal.player.name }}</p>
+                      <p class="text-slate-400">
+                        {{ proposal.fromClub?.name || 'Clube IA' }} • {{ proposal.type }}
+                        @if (proposal.amount) {
+                          • {{ formatCurrency(proposal.amount) }}
+                        }
+                      </p>
+                    </div>
+                  }
+                  @if (incomingAutoProposals().length === 0) {
+                    <p class="text-xs text-slate-500">Sem novas propostas automáticas no momento.</p>
+                  }
+                </div>
+              </div>
+
+              <div class="rounded-lg border border-slate-800 bg-slate-900 p-4">
+                <h3 class="mb-2 text-sm font-semibold text-slate-300">Notícias de transferências (IA)</h3>
+                <div class="space-y-2">
+                  @for (news of transferNews(); track news.id) {
+                    <div class="rounded bg-slate-950 px-3 py-2 text-xs">
+                      <p class="text-slate-200">{{ news.headline }}</p>
+                      <p class="text-slate-500">{{ formatDateTime(news.updatedAt) }}</p>
+                    </div>
+                  }
+                  @if (transferNews().length === 0) {
+                    <p class="text-xs text-slate-500">Sem notícias recentes de negociações entre clubes da IA.</p>
+                  }
+                </div>
+              </div>
+
+              <div class="rounded-lg border border-slate-800 bg-slate-900 p-4">
+                <h3 class="mb-2 text-sm font-semibold text-slate-300">Propostas de emprego</h3>
+                <div class="space-y-2">
+                  @for (offer of jobOffers(); track offer.id) {
+                    <div class="rounded bg-slate-950 px-3 py-2 text-xs">
+                      <p class="font-semibold text-slate-200">{{ offer.clubName }}</p>
+                      <p class="text-slate-400">{{ offer.countryName }} • {{ offer.leagueName }}</p>
+                      <p class="text-slate-500">
+                        Projeto {{ offer.projectScore }} • Oferta {{ formatCurrency(offer.monthlySalaryOffer) }}/mês
+                      </p>
+                      <p class="mt-1 text-slate-500">{{ offer.rationale }}</p>
+                    </div>
+                  }
+                  @if (jobOffers().length === 0) {
+                    <p class="text-xs text-slate-500">Sem propostas de emprego no momento.</p>
+                  }
+                </div>
+              </div>
+            </div>
+
             <div class="rounded-lg border border-slate-800 bg-slate-900 p-6">
               <h3 class="mb-4 text-xl font-bold">Elenco</h3>
               @if (players().length === 0) {
@@ -305,6 +394,7 @@ export class DashboardPage {
   private readonly apiService = inject(ApiService);
   private readonly gameState = inject(GameStateService);
   private readonly router = inject(Router);
+  private readonly notificationService = inject(NotificationService);
 
   readonly saveGame = signal<SaveGame | null>(null);
   readonly club = signal<Club | null>(null);
@@ -312,6 +402,9 @@ export class DashboardPage {
   readonly finance = signal<FinanceAccount | null>(null);
   readonly infrastructure = signal<InfrastructureState | null>(null);
   readonly errorMessage = signal<string | null>(null);
+  readonly incomingAutoProposals = signal<TransferProposalNotification[]>([]);
+  readonly transferNews = signal<TransferNews[]>([]);
+  readonly jobOffers = signal<JobOffer[]>([]);
 
   ngOnInit() {
     const saveGameId = this.gameState.selectedSaveGameId();
@@ -335,6 +428,9 @@ export class DashboardPage {
 
         this.loadFinance(save.id);
         this.loadInfrastructure(save.id);
+        this.loadAiNotifications(save.id);
+        this.loadTransferNews(save.id);
+        this.loadJobOffers(save.id);
       },
       error: () => {
         this.errorMessage.set('Erro ao carregar o save.');
@@ -365,6 +461,60 @@ export class DashboardPage {
     });
   }
 
+  loadAiNotifications(saveGameId: string) {
+    this.apiService
+      .get<PaginatedResult<TransferProposalNotification>>('transfers/proposals', {
+        saveGameId,
+        scope: 'sent',
+        page: 1,
+        limit: 20,
+      })
+      .subscribe({
+        next: (result) => {
+          const currentCount = result.data.length;
+          const key = `bitfoot.autoProposals.${saveGameId}`;
+          const previousCountRaw = window.localStorage.getItem(key);
+          const previousCount = previousCountRaw ? Number(previousCountRaw) : 0;
+
+          this.incomingAutoProposals.set(result.data);
+
+          if (currentCount > previousCount) {
+            const delta = currentCount - previousCount;
+            this.notificationService.show(
+              'info',
+              `${delta} nova(s) proposta(s) automática(s) de clubes da IA recebida(s).`,
+            );
+          }
+
+          window.localStorage.setItem(key, String(currentCount));
+        },
+      });
+  }
+
+  loadTransferNews(saveGameId: string) {
+    this.apiService
+      .get<PaginatedResult<TransferNews>>('transfers/ai/news', {
+        saveGameId,
+        page: 1,
+        limit: 8,
+      })
+      .subscribe({
+        next: (result) => this.transferNews.set(result.data),
+      });
+  }
+
+  loadJobOffers(saveGameId: string) {
+    this.apiService
+      .get<PaginatedResult<JobOffer>>('transfers/ai/job-offers', {
+        saveGameId,
+        page: 1,
+        limit: 5,
+      })
+      .subscribe({
+        next: (result) => this.jobOffers.set(result.data),
+      });
+  }
+
   calculateAverageOverall(): number {
     const playerList = this.players();
     if (playerList.length === 0) return 0;
@@ -380,5 +530,13 @@ export class DashboardPage {
       return `$${(value / 1000).toFixed(0)}K`;
     }
     return `$${value}`;
+  }
+
+  formatDateTime(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+    return date.toLocaleString('pt-BR');
   }
 }

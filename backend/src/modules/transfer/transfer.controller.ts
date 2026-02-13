@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestj
 import { ApiTags } from '@nestjs/swagger';
 import { CreateTransferListingDto } from './dto/create-transfer-listing.dto';
 import { CreateTransferProposalDto } from './dto/create-transfer-proposal.dto';
+import { QueryAiFeedDto } from './dto/query-ai-feed.dto';
 import { QueryTransferMarketDto } from './dto/query-transfer-market.dto';
 import { QueryTransferProposalsDto } from './dto/query-transfer-proposals.dto';
 import { RespondTransferProposalDto } from './dto/respond-transfer-proposal.dto';
@@ -41,6 +42,16 @@ export class TransferController {
   @Get('proposals')
   listProposals(@Query() query: QueryTransferProposalsDto) {
     return this.transferService.listProposals(query);
+  }
+
+  @Get('ai/news')
+  listAiNews(@Query() query: QueryAiFeedDto) {
+    return this.transferService.listAiNews(query);
+  }
+
+  @Get('ai/job-offers')
+  listAiJobOffers(@Query() query: QueryAiFeedDto) {
+    return this.transferService.listAiJobOffers(query);
   }
 
   @Patch('proposals/:id/respond')
