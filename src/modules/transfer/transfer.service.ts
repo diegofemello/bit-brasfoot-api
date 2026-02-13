@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, LessThanOrEqual, Not, Repository } from 'typeorm';
 import { Club } from '../club/entities/club.entity';
@@ -68,7 +72,9 @@ export class TransferService {
   private async validateSquadLimit(clubId: string) {
     const squadSize = await this.playerRepository.count({ where: { clubId } });
     if (squadSize >= this.squadLimit) {
-      throw new BadRequestException('Limite de elenco atingido para o clube de destino');
+      throw new BadRequestException(
+        'Limite de elenco atingido para o clube de destino',
+      );
     }
   }
 
@@ -76,9 +82,13 @@ export class TransferService {
     await this.ensureSaveExists(payload.saveGameId);
     const player = await this.ensurePlayerExists(payload.playerId);
 
-    const existing = await this.listingRepository.findOne({ where: { playerId: payload.playerId } });
+    const existing = await this.listingRepository.findOne({
+      where: { playerId: payload.playerId },
+    });
     if (existing) {
-      throw new BadRequestException('Jogador já está na lista de transferências');
+      throw new BadRequestException(
+        'Jogador já está na lista de transferências',
+      );
     }
 
     return this.listingRepository.save({
@@ -98,7 +108,10 @@ export class TransferService {
     }
 
     await this.listingRepository.delete(listingId);
-    return { success: true, message: 'Jogador removido da lista de transferências' };
+    return {
+      success: true,
+      message: 'Jogador removido da lista de transferências',
+    };
   }
 
   async listMarket(query: QueryTransferMarketDto) {
@@ -109,11 +122,15 @@ export class TransferService {
       .where('listing.isFreeAgent = false');
 
     if (query.saveGameId) {
-      qb.andWhere('listing.saveGameId = :saveGameId', { saveGameId: query.saveGameId });
+      qb.andWhere('listing.saveGameId = :saveGameId', {
+        saveGameId: query.saveGameId,
+      });
     }
 
     if (query.name) {
-      qb.andWhere('LOWER(player.name) LIKE :name', { name: `%${query.name.toLowerCase()}%` });
+      qb.andWhere('LOWER(player.name) LIKE :name', {
+        name: `%${query.name.toLowerCase()}%`,
+      });
     }
 
     if (query.position) {
@@ -121,11 +138,15 @@ export class TransferService {
     }
 
     if (query.minOverall !== undefined) {
-      qb.andWhere('player.overall >= :minOverall', { minOverall: query.minOverall });
+      qb.andWhere('player.overall >= :minOverall', {
+        minOverall: query.minOverall,
+      });
     }
 
     if (query.maxOverall !== undefined) {
-      qb.andWhere('player.overall <= :maxOverall', { maxOverall: query.maxOverall });
+      qb.andWhere('player.overall <= :maxOverall', {
+        maxOverall: query.maxOverall,
+      });
     }
 
     if (query.minValue !== undefined) {
@@ -161,11 +182,15 @@ export class TransferService {
       .where('listing.isFreeAgent = true');
 
     if (query.saveGameId) {
-      qb.andWhere('listing.saveGameId = :saveGameId', { saveGameId: query.saveGameId });
+      qb.andWhere('listing.saveGameId = :saveGameId', {
+        saveGameId: query.saveGameId,
+      });
     }
 
     if (query.name) {
-      qb.andWhere('LOWER(player.name) LIKE :name', { name: `%${query.name.toLowerCase()}%` });
+      qb.andWhere('LOWER(player.name) LIKE :name', {
+        name: `%${query.name.toLowerCase()}%`,
+      });
     }
 
     qb.orderBy('player.overall', 'DESC');
@@ -184,14 +209,28 @@ export class TransferService {
     };
   }
 
-  private async validateProposal(payload: CreateTransferProposalDto, player: Player) {
-    if (payload.fromClubId && payload.toClubId && payload.fromClubId === payload.toClubId) {
-      throw new BadRequestException('Não é permitido negociar jogador com o mesmo clube');
+  private async validateProposal(
+    payload: CreateTransferProposalDto,
+    player: Player,
+  ) {
+    if (
+      payload.fromClubId &&
+      payload.toClubId &&
+      payload.fromClubId === payload.toClubId
+    ) {
+      throw new BadRequestException(
+        'Não é permitido negociar jogador com o mesmo clube',
+      );
     }
 
-    if (payload.type === TransferType.PURCHASE || payload.type === TransferType.SALE) {
+    if (
+      payload.type === TransferType.PURCHASE ||
+      payload.type === TransferType.SALE
+    ) {
       if (!payload.amount || payload.amount <= 0) {
-        throw new BadRequestException('Proposta de compra/venda requer valor maior que zero');
+        throw new BadRequestException(
+          'Proposta de compra/venda requer valor maior que zero',
+        );
       }
     }
 
@@ -204,9 +243,17 @@ export class TransferService {
     }
 
     if (payload.type === TransferType.PURCHASE && payload.toClubId) {
-      const account = await this.accountRepository.findOneBy({ saveGameId: payload.saveGameId });
-      if (account && payload.amount && Number(account.balance) < payload.amount) {
-        throw new BadRequestException('Saldo insuficiente para efetuar a compra');
+      const account = await this.accountRepository.findOneBy({
+        saveGameId: payload.saveGameId,
+      });
+      if (
+        account &&
+        payload.amount &&
+        Number(account.balance) < payload.amount
+      ) {
+        throw new BadRequestException(
+          'Saldo insuficiente para efetuar a compra',
+        );
       }
     }
 
@@ -226,7 +273,10 @@ export class TransferService {
       .where('proposal.saveGameId = :saveGameId', { saveGameId })
       .andWhere('proposal.playerId = :playerId', { playerId })
       .andWhere('proposal.status IN (:...statuses)', {
-        statuses: [TransferProposalStatus.PENDING, TransferProposalStatus.COUNTERED],
+        statuses: [
+          TransferProposalStatus.PENDING,
+          TransferProposalStatus.COUNTERED,
+        ],
       });
 
     if (fromClubId === null) {
@@ -246,12 +296,18 @@ export class TransferService {
     return total > 0;
   }
 
-  private async hasAnyOpenProposalForPlayer(saveGameId: string, playerId: string) {
+  private async hasAnyOpenProposalForPlayer(
+    saveGameId: string,
+    playerId: string,
+  ) {
     const total = await this.proposalRepository.count({
       where: {
         saveGameId,
         playerId,
-        status: In([TransferProposalStatus.PENDING, TransferProposalStatus.COUNTERED]),
+        status: In([
+          TransferProposalStatus.PENDING,
+          TransferProposalStatus.COUNTERED,
+        ]),
       },
     });
 
@@ -265,7 +321,8 @@ export class TransferService {
     positions.forEach((position) => {
       const group = players.filter((item) => item.position === position);
       const average =
-        group.reduce((sum, player) => sum + player.overall, 0) / Math.max(group.length, 1);
+        group.reduce((sum, player) => sum + player.overall, 0) /
+        Math.max(group.length, 1);
       averagesByPosition.set(position, average);
     });
 
@@ -295,12 +352,12 @@ export class TransferService {
       return;
     }
 
-    const veterans = aiSquad
-      .filter((player) => player.age >= 31)
-      .slice(0, 2);
+    const veterans = aiSquad.filter((player) => player.age >= 31).slice(0, 2);
 
     for (const veteran of veterans) {
-      const alreadyListed = await this.listingRepository.findOne({ where: { playerId: veteran.id } });
+      const alreadyListed = await this.listingRepository.findOne({
+        where: { playerId: veteran.id },
+      });
       if (!alreadyListed) {
         await this.listingRepository.save({
           saveGameId,
@@ -321,12 +378,24 @@ export class TransferService {
         order: { overall: 'DESC', value: 'ASC' },
       });
 
-      if (!replacement || !replacement.clubId || replacement.clubId === managedClubId) {
+      if (
+        !replacement ||
+        !replacement.clubId ||
+        replacement.clubId === managedClubId
+      ) {
         continue;
       }
 
-      const duplicate = await this.hasOpenProposal(saveGameId, replacement.id, replacement.clubId, aiClub.id);
-      const duplicateByPlayer = await this.hasAnyOpenProposalForPlayer(saveGameId, replacement.id);
+      const duplicate = await this.hasOpenProposal(
+        saveGameId,
+        replacement.id,
+        replacement.clubId,
+        aiClub.id,
+      );
+      const duplicateByPlayer = await this.hasAnyOpenProposalForPlayer(
+        saveGameId,
+        replacement.id,
+      );
       if (duplicate || duplicateByPlayer) {
         continue;
       }
@@ -347,13 +416,18 @@ export class TransferService {
     }
   }
 
-  private averageOverallAtPosition(players: Player[], position: PlayerPosition) {
+  private averageOverallAtPosition(
+    players: Player[],
+    position: PlayerPosition,
+  ) {
     const group = players.filter((item) => item.position === position);
     if (group.length === 0) {
       return 0;
     }
 
-    return group.reduce((sum, player) => sum + player.overall, 0) / group.length;
+    return (
+      group.reduce((sum, player) => sum + player.overall, 0) / group.length
+    );
   }
 
   private evaluateAiTransferDecision(params: {
@@ -371,12 +445,21 @@ export class TransferService {
     const amount = proposal.amount ?? player.value;
     const valueBase = Math.max(1, player.value);
     const ratio = amount / valueBase;
-    const positionAverage = this.averageOverallAtPosition(targetSquad, player.position);
+    const positionAverage = this.averageOverallAtPosition(
+      targetSquad,
+      player.position,
+    );
     const fitGain = player.overall - positionAverage;
 
-    const maxAffordableByClub = Math.max(0, Math.round(targetClub.budget * 0.35));
+    const maxAffordableByClub = Math.max(
+      0,
+      Math.round(targetClub.budget * 0.35),
+    );
     const maxAffordableBySave = Math.max(0, Math.round(saveBalance * 0.5));
-    const maxAffordable = Math.min(maxAffordableByClub, maxAffordableBySave || maxAffordableByClub);
+    const maxAffordable = Math.min(
+      maxAffordableByClub,
+      maxAffordableBySave || maxAffordableByClub,
+    );
     const affordable = amount <= maxAffordable;
 
     const fitBoost = Math.max(0, Math.min(0.35, fitGain * 0.02));
@@ -389,8 +472,17 @@ export class TransferService {
       };
     }
 
-    if (affordable && ratio <= 1.45 && proposal.status !== TransferProposalStatus.COUNTERED) {
-      const desiredAmount = Math.round(Math.max(player.value * (1 + Math.max(0, fitGain) * 0.01), amount * 0.88));
+    if (
+      affordable &&
+      ratio <= 1.45 &&
+      proposal.status !== TransferProposalStatus.COUNTERED
+    ) {
+      const desiredAmount = Math.round(
+        Math.max(
+          player.value * (1 + Math.max(0, fitGain) * 0.01),
+          amount * 0.88,
+        ),
+      );
       return {
         action: 'counter',
         counterAmount: Math.max(1, desiredAmount),
@@ -414,7 +506,9 @@ export class TransferService {
   async runAiTransferCycle(payload: RunAiTransfersDto) {
     const save = await this.ensureSaveExists(payload.saveGameId);
     if (!save.clubId) {
-      throw new BadRequestException('Save sem clube gerenciado para executar IA de transferências');
+      throw new BadRequestException(
+        'Save sem clube gerenciado para executar IA de transferências',
+      );
     }
 
     const targetOffers = payload.offers ?? 6;
@@ -448,7 +542,11 @@ export class TransferService {
     });
 
     for (const aiClub of aiClubs) {
-      await this.proposeVeteranRotationForAiClub(payload.saveGameId, aiClub, managedClubId);
+      await this.proposeVeteranRotationForAiClub(
+        payload.saveGameId,
+        aiClub,
+        managedClubId,
+      );
     }
 
     for (const aiClub of aiClubs) {
@@ -494,7 +592,10 @@ export class TransferService {
         candidate.clubId,
         aiClub.id,
       );
-      const duplicateByPlayer = await this.hasAnyOpenProposalForPlayer(payload.saveGameId, candidate.id);
+      const duplicateByPlayer = await this.hasAnyOpenProposalForPlayer(
+        payload.saveGameId,
+        candidate.id,
+      );
       if (duplicate || duplicateByPlayer) {
         continue;
       }
@@ -530,7 +631,8 @@ export class TransferService {
         break;
       }
 
-      const interestedClub = aiClubs[Math.floor(Math.random() * aiClubs.length)];
+      const interestedClub =
+        aiClubs[Math.floor(Math.random() * aiClubs.length)];
       if (!interestedClub) {
         break;
       }
@@ -541,7 +643,10 @@ export class TransferService {
         managedClubId,
         interestedClub.id,
       );
-      const duplicateByPlayer = await this.hasAnyOpenProposalForPlayer(payload.saveGameId, managedPlayer.id);
+      const duplicateByPlayer = await this.hasAnyOpenProposalForPlayer(
+        payload.saveGameId,
+        managedPlayer.id,
+      );
       if (duplicate || duplicateByPlayer) {
         continue;
       }
@@ -573,13 +678,18 @@ export class TransferService {
     }
 
     const aiClubIds = new Set(aiClubs.map((club) => club.id));
-    const saveAccount = await this.accountRepository.findOneBy({ saveGameId: payload.saveGameId });
+    const saveAccount = await this.accountRepository.findOneBy({
+      saveGameId: payload.saveGameId,
+    });
     const saveBalance = Number(saveAccount?.balance ?? 0);
 
     const pendingForAiDecision = await this.proposalRepository.find({
       where: {
         saveGameId: payload.saveGameId,
-        status: In([TransferProposalStatus.PENDING, TransferProposalStatus.COUNTERED]),
+        status: In([
+          TransferProposalStatus.PENDING,
+          TransferProposalStatus.COUNTERED,
+        ]),
       },
       relations: ['player', 'toClub'],
       order: { createdAt: 'ASC' },
@@ -653,7 +763,9 @@ export class TransferService {
       .leftJoinAndSelect('proposal.player', 'player')
       .leftJoinAndSelect('proposal.fromClub', 'fromClub')
       .leftJoinAndSelect('proposal.toClub', 'toClub')
-      .where('proposal.saveGameId = :saveGameId', { saveGameId: query.saveGameId })
+      .where('proposal.saveGameId = :saveGameId', {
+        saveGameId: query.saveGameId,
+      })
       .andWhere('proposal.status IN (:...statuses)', {
         statuses: [
           TransferProposalStatus.ACCEPTED,
@@ -666,12 +778,18 @@ export class TransferService {
       .take(query.limit);
 
     if (managedClubId) {
-      qb.andWhere('(proposal.fromClubId != :managedClubId OR proposal.fromClubId IS NULL)', {
-        managedClubId,
-      });
-      qb.andWhere('(proposal.toClubId != :managedClubId OR proposal.toClubId IS NULL)', {
-        managedClubId,
-      });
+      qb.andWhere(
+        '(proposal.fromClubId != :managedClubId OR proposal.fromClubId IS NULL)',
+        {
+          managedClubId,
+        },
+      );
+      qb.andWhere(
+        '(proposal.toClubId != :managedClubId OR proposal.toClubId IS NULL)',
+        {
+          managedClubId,
+        },
+      );
     }
 
     const [items, total] = await qb.getManyAndCount();
@@ -712,7 +830,10 @@ export class TransferService {
       : null;
 
     const managerReputation = managedClub
-      ? Math.min(99, 50 + Math.round((Number(managedClub.budget) || 0) / 10_000_000))
+      ? Math.min(
+          99,
+          50 + Math.round((Number(managedClub.budget) || 0) / 10_000_000),
+        )
       : (save.lastSeasonSummary?.careerReputation ?? 50);
 
     const allClubs = await this.clubRepository.find({
@@ -724,21 +845,29 @@ export class TransferService {
       ? await this.playerRepository.find({ where: { clubId: managedClub.id } })
       : [];
     const managedAverage =
-      managedSquad.reduce((sum, player) => sum + player.overall, 0) / Math.max(1, managedSquad.length);
+      managedSquad.reduce((sum, player) => sum + player.overall, 0) /
+      Math.max(1, managedSquad.length);
 
     const rankedCandidates = allClubs
       .filter((club) => club.id !== managedClub?.id)
       .map((club) => {
-        const budgetGap = managedClub ? Number(club.budget) - Number(managedClub.budget) : 0;
-        const projectScore = Math.max(0, Math.round(Number(club.budget) / 1_000_000 + (budgetGap > 0 ? 8 : 2)));
+        const budgetGap = managedClub
+          ? Number(club.budget) - Number(managedClub.budget)
+          : 0;
+        const projectScore = Math.max(
+          0,
+          Math.round(Number(club.budget) / 1_000_000 + (budgetGap > 0 ? 8 : 2)),
+        );
         const reputationDistance = Math.abs(projectScore - managerReputation);
-        const offerSalary = Math.max(60_000, Math.round(Number(club.budget) * 0.008));
-        const rationale =
-          !managedClub
-            ? reputationDistance <= 12
-              ? 'Oferta alinhada ao seu momento de carreira atual.'
-              : 'Projeto desafiador em relação à sua reputação atual.'
-            : budgetGap > 0
+        const offerSalary = Math.max(
+          60_000,
+          Math.round(Number(club.budget) * 0.008),
+        );
+        const rationale = !managedClub
+          ? reputationDistance <= 12
+            ? 'Oferta alinhada ao seu momento de carreira atual.'
+            : 'Projeto desafiador em relação à sua reputação atual.'
+          : budgetGap > 0
             ? 'Projeto com maior investimento e ambição de títulos.'
             : managedAverage >= 74
               ? 'Busca por técnico com bom desempenho esportivo recente.'
@@ -752,10 +881,19 @@ export class TransferService {
           rationale,
         };
       })
-      .sort((a, b) => a.reputationDistance - b.reputationDistance || b.projectScore - a.projectScore);
+      .sort(
+        (a, b) =>
+          a.reputationDistance - b.reputationDistance ||
+          b.projectScore - a.projectScore,
+      );
 
-    const relevantCandidates = rankedCandidates.filter((item) => item.reputationDistance <= 18);
-    const candidates = relevantCandidates.length > 0 ? relevantCandidates : rankedCandidates.slice(0, 10);
+    const relevantCandidates = rankedCandidates.filter(
+      (item) => item.reputationDistance <= 18,
+    );
+    const candidates =
+      relevantCandidates.length > 0
+        ? relevantCandidates
+        : rankedCandidates.slice(0, 10);
 
     const start = (query.page - 1) * query.limit;
     const data = candidates.slice(start, start + query.limit);
@@ -821,7 +959,9 @@ export class TransferService {
         },
         ['playerId'],
       );
-      await this.proposalRepository.update(proposal.id, { status: TransferProposalStatus.ACCEPTED });
+      await this.proposalRepository.update(proposal.id, {
+        status: TransferProposalStatus.ACCEPTED,
+      });
     }
 
     return this.proposalRepository.findOne({
@@ -841,25 +981,37 @@ export class TransferService {
       .leftJoinAndSelect('proposal.toClub', 'toClub')
       .orderBy('proposal.createdAt', 'DESC');
 
-    qb.where('proposal.saveGameId = :saveGameId', { saveGameId: query.saveGameId });
+    qb.where('proposal.saveGameId = :saveGameId', {
+      saveGameId: query.saveGameId,
+    });
 
     if (query.scope === 'sent' && managedClubId) {
       qb.andWhere('proposal.toClubId = :managedClubId', { managedClubId });
       qb.andWhere('proposal.status IN (:...statuses)', {
-        statuses: [TransferProposalStatus.PENDING, TransferProposalStatus.COUNTERED],
+        statuses: [
+          TransferProposalStatus.PENDING,
+          TransferProposalStatus.COUNTERED,
+        ],
       });
     }
 
     if (query.scope === 'received' && managedClubId) {
       qb.andWhere('proposal.fromClubId = :managedClubId', { managedClubId });
       qb.andWhere('proposal.status IN (:...statuses)', {
-        statuses: [TransferProposalStatus.PENDING, TransferProposalStatus.COUNTERED],
+        statuses: [
+          TransferProposalStatus.PENDING,
+          TransferProposalStatus.COUNTERED,
+        ],
       });
     }
 
     if (query.scope === 'history') {
       qb.andWhere('proposal.status IN (:...statuses)', {
-        statuses: [TransferProposalStatus.ACCEPTED, TransferProposalStatus.REJECTED, TransferProposalStatus.CANCELED],
+        statuses: [
+          TransferProposalStatus.ACCEPTED,
+          TransferProposalStatus.REJECTED,
+          TransferProposalStatus.CANCELED,
+        ],
       });
     }
 
@@ -880,19 +1032,31 @@ export class TransferService {
   private async applyAcceptedTransfer(proposal: TransferProposal) {
     const player = await this.ensurePlayerExists(proposal.playerId);
 
-    if (proposal.type === TransferType.PURCHASE || proposal.type === TransferType.SALE || proposal.type === TransferType.LOAN) {
+    if (
+      proposal.type === TransferType.PURCHASE ||
+      proposal.type === TransferType.SALE ||
+      proposal.type === TransferType.LOAN
+    ) {
       if (!proposal.toClubId) {
-        throw new BadRequestException('Transferência aceita sem clube de destino');
+        throw new BadRequestException(
+          'Transferência aceita sem clube de destino',
+        );
       }
 
       await this.validateSquadLimit(proposal.toClubId);
-      await this.playerRepository.update(player.id, { clubId: proposal.toClubId });
+      await this.playerRepository.update(player.id, {
+        clubId: proposal.toClubId,
+      });
 
       if (proposal.type === TransferType.PURCHASE && proposal.amount) {
-        const account = await this.accountRepository.findOneBy({ saveGameId: proposal.saveGameId });
+        const account = await this.accountRepository.findOneBy({
+          saveGameId: proposal.saveGameId,
+        });
         if (account) {
           if (Number(account.balance) < proposal.amount) {
-            throw new BadRequestException('Saldo insuficiente para concluir compra');
+            throw new BadRequestException(
+              'Saldo insuficiente para concluir compra',
+            );
           }
           await this.accountRepository.update(account.id, {
             balance: Number(account.balance) - proposal.amount,
@@ -914,20 +1078,32 @@ export class TransferService {
         await this.validateSquadLimit(originClubId);
       }
 
-      await this.playerRepository.update(player.id, { clubId: proposal.toClubId });
-      await this.playerRepository.update(swapPlayer.id, { clubId: originClubId });
+      await this.playerRepository.update(player.id, {
+        clubId: proposal.toClubId,
+      });
+      await this.playerRepository.update(swapPlayer.id, {
+        clubId: originClubId,
+      });
     }
 
     await this.listingRepository.delete({ playerId: proposal.playerId });
   }
 
-  async respondProposal(proposalId: string, payload: RespondTransferProposalDto) {
-    const proposal = await this.proposalRepository.findOne({ where: { id: proposalId } });
+  async respondProposal(
+    proposalId: string,
+    payload: RespondTransferProposalDto,
+  ) {
+    const proposal = await this.proposalRepository.findOne({
+      where: { id: proposalId },
+    });
     if (!proposal) {
       throw new NotFoundException('Proposta não encontrada');
     }
 
-    if (proposal.status !== TransferProposalStatus.PENDING && proposal.status !== TransferProposalStatus.COUNTERED) {
+    if (
+      proposal.status !== TransferProposalStatus.PENDING &&
+      proposal.status !== TransferProposalStatus.COUNTERED
+    ) {
       throw new BadRequestException('Proposta já finalizada');
     }
 
@@ -947,7 +1123,9 @@ export class TransferService {
 
     if (payload.action === 'counter') {
       if (payload.counterAmount === undefined) {
-        throw new BadRequestException('Contraproposta requer valor de contraproposta');
+        throw new BadRequestException(
+          'Contraproposta requer valor de contraproposta',
+        );
       }
 
       await this.proposalRepository.update(proposalId, {

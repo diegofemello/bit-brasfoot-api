@@ -4,9 +4,20 @@ import { In, Repository } from 'typeorm';
 import { Club } from '../club/entities/club.entity';
 import { CompetitionSeason } from '../competition/entities/competition-season.entity';
 import { CompetitionType } from '../competition/entities/competition.entity';
-import { Fixture, FixtureStage, FixtureStatus, KnockoutRound } from '../competition/entities/fixture.entity';
-import { Standing, StandingStage } from '../competition/entities/standing.entity';
-import { MatchEvent, MatchEventType } from '../match/entities/match-event.entity';
+import {
+  Fixture,
+  FixtureStage,
+  FixtureStatus,
+  KnockoutRound,
+} from '../competition/entities/fixture.entity';
+import {
+  Standing,
+  StandingStage,
+} from '../competition/entities/standing.entity';
+import {
+  MatchEvent,
+  MatchEventType,
+} from '../match/entities/match-event.entity';
 import { Match } from '../match/entities/match.entity';
 import { Player } from '../player/entities/player.entity';
 import { SaveGame } from '../save-game/entities/save-game.entity';
@@ -33,7 +44,9 @@ export class StatsService {
   ) {}
 
   private async ensureSave(saveGameId: string) {
-    const save = await this.saveGameRepository.findOne({ where: { id: saveGameId } });
+    const save = await this.saveGameRepository.findOne({
+      where: { id: saveGameId },
+    });
     if (!save) {
       throw new NotFoundException('Save não encontrado');
     }
@@ -140,7 +153,10 @@ export class StatsService {
           assists: Math.max(0, Math.floor(goals * 0.6 + (potential - 70) / 10)),
         };
       })
-      .sort((a, b) => b.assists - a.assists || a.playerName.localeCompare(b.playerName))
+      .sort(
+        (a, b) =>
+          b.assists - a.assists || a.playerName.localeCompare(b.playerName),
+      )
       .slice(0, limit)
       .map((row, index) => ({ ...row, position: index + 1 }));
 
@@ -156,7 +172,9 @@ export class StatsService {
       take: 5,
     });
 
-    const seasonFixturesCount = await this.fixtureRepository.count({ where: { seasonId: season.id } });
+    const seasonFixturesCount = await this.fixtureRepository.count({
+      where: { seasonId: season.id },
+    });
     const playedFixturesCount = await this.fixtureRepository.count({
       where: { seasonId: season.id, status: FixtureStatus.PLAYED },
     });
@@ -198,13 +216,25 @@ export class StatsService {
 
     const seasonIds = seasons.map((season) => season.id);
     const standings = seasonIds.length
-      ? await this.standingRepository.find({ where: { seasonId: In(seasonIds) }, select: ['clubId'] })
+      ? await this.standingRepository.find({
+          where: { seasonId: In(seasonIds) },
+          select: ['clubId'],
+        })
       : [];
 
     const clubIds = Array.from(new Set(standings.map((item) => item.clubId)));
 
     const players = await this.playerRepository.find({
-      where: clubIds.length > 0 ? { clubId: In(clubIds) } : { clubId: In((await this.clubRepository.find({ select: ['id'] })).map((club) => club.id)) },
+      where:
+        clubIds.length > 0
+          ? { clubId: In(clubIds) }
+          : {
+              clubId: In(
+                (await this.clubRepository.find({ select: ['id'] })).map(
+                  (club) => club.id,
+                ),
+              ),
+            },
       relations: ['club'],
       take: Math.max(limit * 4, 100),
       order: {
@@ -226,17 +256,31 @@ export class StatsService {
     });
 
     const byOverall = [...players]
-      .sort((a, b) => b.overall - a.overall || b.potential - a.potential || a.name.localeCompare(b.name))
+      .sort(
+        (a, b) =>
+          b.overall - a.overall ||
+          b.potential - a.potential ||
+          a.name.localeCompare(b.name),
+      )
       .slice(0, limit)
       .map((player, index) => mapPlayer(player, index + 1));
 
     const byPotential = [...players]
-      .sort((a, b) => b.potential - a.potential || b.overall - a.overall || a.name.localeCompare(b.name))
+      .sort(
+        (a, b) =>
+          b.potential - a.potential ||
+          b.overall - a.overall ||
+          a.name.localeCompare(b.name),
+      )
       .slice(0, limit)
       .map((player, index) => mapPlayer(player, index + 1));
 
     const byMarketValue = [...players]
-      .sort((a, b) => this.toNumber(b.value) - this.toNumber(a.value) || b.overall - a.overall)
+      .sort(
+        (a, b) =>
+          this.toNumber(b.value) - this.toNumber(a.value) ||
+          b.overall - a.overall,
+      )
       .slice(0, limit)
       .map((player, index) => mapPlayer(player, index + 1));
 
@@ -319,7 +363,9 @@ export class StatsService {
       const homeScore = this.toNumber(finalFixture.homeScore);
       const awayScore = this.toNumber(finalFixture.awayScore);
       const homeWins = homeScore >= awayScore;
-      const championClub = homeWins ? finalFixture.homeClub : finalFixture.awayClub;
+      const championClub = homeWins
+        ? finalFixture.homeClub
+        : finalFixture.awayClub;
 
       champions.push({
         seasonId: season.id,
@@ -333,24 +379,25 @@ export class StatsService {
       });
     }
 
-    const titlesByClub = champions.reduce<Record<string, { clubId: string; clubName: string; titles: number }>>(
-      (acc, item) => {
-        const current = acc[item.championClubId] ?? {
-          clubId: item.championClubId,
-          clubName: item.championClubName,
-          titles: 0,
-        };
-        current.titles += 1;
-        acc[item.championClubId] = current;
-        return acc;
-      },
-      {},
-    );
+    const titlesByClub = champions.reduce<
+      Record<string, { clubId: string; clubName: string; titles: number }>
+    >((acc, item) => {
+      const current = acc[item.championClubId] ?? {
+        clubId: item.championClubId,
+        clubName: item.championClubName,
+        titles: 0,
+      };
+      current.titles += 1;
+      acc[item.championClubId] = current;
+      return acc;
+    }, {});
 
     return {
       saveId: saveGameId,
       champions,
-      titleRanking: Object.values(titlesByClub).sort((a, b) => b.titles - a.titles || a.clubName.localeCompare(b.clubName)),
+      titleRanking: Object.values(titlesByClub).sort(
+        (a, b) => b.titles - a.titles || a.clubName.localeCompare(b.clubName),
+      ),
     };
   }
 
@@ -409,8 +456,12 @@ export class StatsService {
         biggestWin = {
           matchId: match.id,
           score: `${homeScore} x ${awayScore}`,
-          winnerClubName: homeWins ? match.homeClub?.name ?? 'Mandante' : match.awayClub?.name ?? 'Visitante',
-          loserClubName: homeWins ? match.awayClub?.name ?? 'Visitante' : match.homeClub?.name ?? 'Mandante',
+          winnerClubName: homeWins
+            ? (match.homeClub?.name ?? 'Mandante')
+            : (match.awayClub?.name ?? 'Visitante'),
+          loserClubName: homeWins
+            ? (match.awayClub?.name ?? 'Visitante')
+            : (match.homeClub?.name ?? 'Mandante'),
           goalDifference,
         };
       }

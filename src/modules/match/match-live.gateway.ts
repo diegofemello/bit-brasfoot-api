@@ -32,12 +32,17 @@ export class MatchLiveGateway implements OnGatewayInit, OnGatewayConnection {
   }
 
   handleConnection(client: Socket) {
-    this.logger.log(JSON.stringify({ event: 'match_live.connected', socketId: client.id }));
+    this.logger.log(
+      JSON.stringify({ event: 'match_live.connected', socketId: client.id }),
+    );
     client.emit('match_connected', { ok: true });
   }
 
   @SubscribeMessage('join_match')
-  async joinMatch(@ConnectedSocket() client: Socket, @MessageBody() payload: { fixtureId: string }) {
+  async joinMatch(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { fixtureId: string },
+  ) {
     try {
       const fixtureId = payload?.fixtureId;
       if (!fixtureId) {
@@ -48,24 +53,43 @@ export class MatchLiveGateway implements OnGatewayInit, OnGatewayConnection {
       await client.join(this.roomName(fixtureId));
       const state = await this.realtimeService.join(fixtureId);
       client.emit('match_state', state);
-      this.logger.log(JSON.stringify({ event: 'match_live.join', fixtureId, socketId: client.id }));
+      this.logger.log(
+        JSON.stringify({
+          event: 'match_live.join',
+          fixtureId,
+          socketId: client.id,
+        }),
+      );
     } catch (error) {
       this.logger.error(
-        JSON.stringify({ event: 'match_live.join_failed', socketId: client.id, error: this.toMessage(error) }),
+        JSON.stringify({
+          event: 'match_live.join_failed',
+          socketId: client.id,
+          error: this.toMessage(error),
+        }),
       );
       client.emit('match_error', { message: this.toMessage(error) });
     }
   }
 
   @SubscribeMessage('leave_match')
-  async leaveMatch(@ConnectedSocket() client: Socket, @MessageBody() payload: { fixtureId: string }) {
+  async leaveMatch(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { fixtureId: string },
+  ) {
     const fixtureId = payload?.fixtureId;
     if (!fixtureId) {
       return;
     }
 
     await client.leave(this.roomName(fixtureId));
-    this.logger.log(JSON.stringify({ event: 'match_live.leave', fixtureId, socketId: client.id }));
+    this.logger.log(
+      JSON.stringify({
+        event: 'match_live.leave',
+        fixtureId,
+        socketId: client.id,
+      }),
+    );
   }
 
   @SubscribeMessage('match_control')
@@ -85,11 +109,15 @@ export class MatchLiveGateway implements OnGatewayInit, OnGatewayConnection {
         return;
       }
 
-      if (payload.action === 'start') await this.realtimeService.start(fixtureId);
-      if (payload.action === 'pause') await this.realtimeService.pause(fixtureId);
-      if (payload.action === 'resume') await this.realtimeService.resume(fixtureId);
+      if (payload.action === 'start')
+        await this.realtimeService.start(fixtureId);
+      if (payload.action === 'pause')
+        await this.realtimeService.pause(fixtureId);
+      if (payload.action === 'resume')
+        await this.realtimeService.resume(fixtureId);
       if (payload.action === 'step') await this.realtimeService.step(fixtureId);
-      if (payload.action === 'reset') await this.realtimeService.reset(fixtureId);
+      if (payload.action === 'reset')
+        await this.realtimeService.reset(fixtureId);
       if (payload.action === 'speed') {
         await this.realtimeService.setSpeed(fixtureId, payload.speedMs ?? 900);
       }

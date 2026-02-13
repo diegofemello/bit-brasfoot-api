@@ -7,7 +7,9 @@ import { InfrastructureService } from './infrastructure.service';
 import { Infrastructure } from './entities/infrastructure.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Infrastructure, FinanceAccount, SaveGame])],
+  imports: [
+    TypeOrmModule.forFeature([Infrastructure, FinanceAccount, SaveGame]),
+  ],
   controllers: [InfrastructureController],
   providers: [InfrastructureService],
   exports: [InfrastructureService],

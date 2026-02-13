@@ -19,7 +19,10 @@ export class CareerController {
   }
 
   @Get('save/:saveGameId/offers')
-  getOffers(@Param('saveGameId') saveGameId: string, @Query() query: QueryAiFeedDto) {
+  getOffers(
+    @Param('saveGameId') saveGameId: string,
+    @Query() query: QueryAiFeedDto,
+  ) {
     return this.careerService.getOffers(saveGameId, {
       ...query,
       saveGameId,
@@ -27,7 +30,10 @@ export class CareerController {
   }
 
   @Post('save/:saveGameId/offers/:clubId/accept')
-  acceptOffer(@Param('saveGameId') saveGameId: string, @Param('clubId') clubId: string) {
+  acceptOffer(
+    @Param('saveGameId') saveGameId: string,
+    @Param('clubId') clubId: string,
+  ) {
     return this.careerService.acceptOffer(saveGameId, clubId);
   }
 

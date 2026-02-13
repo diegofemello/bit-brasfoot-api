@@ -7,7 +7,9 @@ import { FinanceAccount } from './entities/finance-account.entity';
 import { FinanceTransaction } from './entities/finance-transaction.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([FinanceAccount, FinanceTransaction, SaveGame])],
+  imports: [
+    TypeOrmModule.forFeature([FinanceAccount, FinanceTransaction, SaveGame]),
+  ],
   controllers: [FinanceController],
   providers: [FinanceService],
   exports: [FinanceService],

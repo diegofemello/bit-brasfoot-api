@@ -121,7 +121,9 @@ export class Phase4CompetitionsSchema1739400000000 implements MigrationInterface
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_fixtures_season_round"`);
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_standings_season"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_competition_seasons_save"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_competition_seasons_save"`,
+    );
 
     await queryRunner.query(`DROP TABLE IF EXISTS "fixtures"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "standings"`);
@@ -129,7 +131,9 @@ export class Phase4CompetitionsSchema1739400000000 implements MigrationInterface
     await queryRunner.query(`DROP TABLE IF EXISTS "competitions"`);
 
     await queryRunner.query(`DROP TYPE IF EXISTS "fixtures_status_enum"`);
-    await queryRunner.query(`DROP TYPE IF EXISTS "competition_seasons_status_enum"`);
+    await queryRunner.query(
+      `DROP TYPE IF EXISTS "competition_seasons_status_enum"`,
+    );
     await queryRunner.query(`DROP TYPE IF EXISTS "competitions_type_enum"`);
   }
 }

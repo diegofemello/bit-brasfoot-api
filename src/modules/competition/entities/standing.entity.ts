@@ -23,7 +23,9 @@ export class Standing {
   @Column({ name: 'season_id' })
   seasonId!: string;
 
-  @ManyToOne(() => CompetitionSeason, (season) => season.standings, { onDelete: 'CASCADE' })
+  @ManyToOne(() => CompetitionSeason, (season) => season.standings, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'season_id' })
   season!: CompetitionSeason;
 

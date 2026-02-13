@@ -77,10 +77,18 @@ export class Phase1WorldDataSchema1739385000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_leagues_country_id" ON "leagues" ("country_id")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_clubs_league_id" ON "clubs" ("league_id")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_players_club_id" ON "players" ("club_id")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IDX_players_overall" ON "players" ("overall")`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IDX_leagues_country_id" ON "leagues" ("country_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IDX_clubs_league_id" ON "clubs" ("league_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IDX_players_club_id" ON "players" ("club_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IDX_players_overall" ON "players" ("overall")`,
+    );
 
     await queryRunner.query(`
       DO $$
@@ -96,7 +104,9 @@ export class Phase1WorldDataSchema1739385000000 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE "save_games" DROP CONSTRAINT IF EXISTS "FK_save_games_club"`);
+    await queryRunner.query(
+      `ALTER TABLE "save_games" DROP CONSTRAINT IF EXISTS "FK_save_games_club"`,
+    );
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_players_overall"`);
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_players_club_id"`);
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_clubs_league_id"`);

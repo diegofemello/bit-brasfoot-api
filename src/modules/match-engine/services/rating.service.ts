@@ -20,7 +20,9 @@ export class RatingService {
     return input.players.map((player) => {
       let rating = base;
 
-      const playerEvents = input.events.filter((event) => event.playerName === player.name);
+      const playerEvents = input.events.filter(
+        (event) => event.playerName === player.name,
+      );
       playerEvents.forEach((event) => {
         if (event.type === MatchEventType.GOAL) rating += goalBonus;
         if (event.type === MatchEventType.YELLOW_CARD) rating -= yellowPenalty;

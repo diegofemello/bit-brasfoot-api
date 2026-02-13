@@ -1,4 +1,12 @@
-import { IsEnum, IsInt, IsOptional, IsString, IsUUID, Length, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Length,
+  Min,
+} from 'class-validator';
 import { TransferType } from '../entities/transfer-proposal.entity';
 
 export class CreateTransferProposalDto {

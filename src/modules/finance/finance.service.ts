@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaginationDto } from '../../common/dto/pagination.dto';
@@ -23,7 +27,9 @@ export class FinanceService {
   ) {}
 
   private async ensureSaveExists(saveGameId: string) {
-    const saveGame = await this.saveGameRepository.findOneBy({ id: saveGameId });
+    const saveGame = await this.saveGameRepository.findOneBy({
+      id: saveGameId,
+    });
     if (!saveGame) {
       throw new NotFoundException('Save não encontrado');
     }
@@ -69,13 +75,20 @@ export class FinanceService {
   async createTransaction(payload: CreateFinanceTransactionDto) {
     const account = await this.getOrCreateAccount(payload.saveGameId);
 
-    if (payload.type === FinanceTransactionType.EXPENSE && account.balance < payload.amount) {
-      throw new BadRequestException('Saldo insuficiente para registrar a despesa');
+    if (
+      payload.type === FinanceTransactionType.EXPENSE &&
+      account.balance < payload.amount
+    ) {
+      throw new BadRequestException(
+        'Saldo insuficiente para registrar a despesa',
+      );
     }
 
     const transaction = await this.transactionRepository.save(payload);
     const delta =
-      payload.type === FinanceTransactionType.INCOME ? payload.amount : -payload.amount;
+      payload.type === FinanceTransactionType.INCOME
+        ? payload.amount
+        : -payload.amount;
 
     await this.accountRepository.update(account.id, {
       balance: Number(account.balance) + delta,

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Logger } from '@nestjs/common';
 import { Subject } from 'rxjs';
 import { MatchEventType } from './entities/match-event.entity';
@@ -46,7 +50,12 @@ interface LiveSession {
   isPlaying: boolean;
   speedMs: number;
   timer: ReturnType<typeof setInterval> | null;
-  timeline: Array<{ minute: number; homeScore: number; awayScore: number; commentary: string }>;
+  timeline: Array<{
+    minute: number;
+    homeScore: number;
+    awayScore: number;
+    commentary: string;
+  }>;
   events: Array<{ minute: number; type: MatchEventType; description: string }>;
   homeTactic: LiveTactic;
   awayTactic: LiveTactic;
@@ -64,8 +73,14 @@ interface LiveSession {
 @Injectable()
 export class MatchRealtimeService {
   private readonly sessions = new Map<string, LiveSession>();
-  private readonly sessionInitialization = new Map<string, Promise<LiveSession>>();
-  private readonly stateSubject = new Subject<{ fixtureId: string; state: LiveMatchState }>();
+  private readonly sessionInitialization = new Map<
+    string,
+    Promise<LiveSession>
+  >();
+  private readonly stateSubject = new Subject<{
+    fixtureId: string;
+    state: LiveMatchState;
+  }>();
   private readonly logger = new Logger(MatchRealtimeService.name);
   readonly state$ = this.stateSubject.asObservable();
 
@@ -106,8 +121,17 @@ export class MatchRealtimeService {
     session.isPlaying = true;
     this.startTimer(session);
     this.emitState(session, this.eventsUntilMinute(session, session.minute));
-    this.logger.log(JSON.stringify({ event: 'realtime.start', fixtureId, minute: session.minute }));
-    return this.toState(session, this.eventsUntilMinute(session, session.minute));
+    this.logger.log(
+      JSON.stringify({
+        event: 'realtime.start',
+        fixtureId,
+        minute: session.minute,
+      }),
+    );
+    return this.toState(
+      session,
+      this.eventsUntilMinute(session, session.minute),
+    );
   }
 
   async pause(fixtureId: string) {
@@ -115,7 +139,10 @@ export class MatchRealtimeService {
     session.isPlaying = false;
     this.stopTimer(session);
     this.emitState(session, this.eventsUntilMinute(session, session.minute));
-    return this.toState(session, this.eventsUntilMinute(session, session.minute));
+    return this.toState(
+      session,
+      this.eventsUntilMinute(session, session.minute),
+    );
   }
 
   async resume(fixtureId: string) {
@@ -123,13 +150,19 @@ export class MatchRealtimeService {
     session.isPlaying = true;
     this.startTimer(session);
     this.emitState(session, this.eventsUntilMinute(session, session.minute));
-    return this.toState(session, this.eventsUntilMinute(session, session.minute));
+    return this.toState(
+      session,
+      this.eventsUntilMinute(session, session.minute),
+    );
   }
 
   async step(fixtureId: string) {
     const session = await this.ensureSession(fixtureId);
     this.stepMinute(session);
-    return this.toState(session, this.eventsUntilMinute(session, session.minute));
+    return this.toState(
+      session,
+      this.eventsUntilMinute(session, session.minute),
+    );
   }
 
   async reset(fixtureId: string) {
@@ -144,7 +177,10 @@ export class MatchRealtimeService {
     this.stopTimer(session);
     this.emitState(session, this.eventsUntilMinute(session, session.minute));
     this.logger.log(JSON.stringify({ event: 'realtime.reset', fixtureId }));
-    return this.toState(session, this.eventsUntilMinute(session, session.minute));
+    return this.toState(
+      session,
+      this.eventsUntilMinute(session, session.minute),
+    );
   }
 
   async setSpeed(fixtureId: string, speedMs: number) {
@@ -154,10 +190,20 @@ export class MatchRealtimeService {
       this.startTimer(session);
     }
     this.emitState(session, this.eventsUntilMinute(session, session.minute));
-    return this.toState(session, this.eventsUntilMinute(session, session.minute));
+    return this.toState(
+      session,
+      this.eventsUntilMinute(session, session.minute),
+    );
   }
 
-  async coachAction(fixtureId: string, payload: { team: TeamSide; type: 'substitution' | 'tactic'; tactic?: LiveTactic }) {
+  async coachAction(
+    fixtureId: string,
+    payload: {
+      team: TeamSide;
+      type: 'substitution' | 'tactic';
+      tactic?: LiveTactic;
+    },
+  ) {
     const session = await this.ensureSession(fixtureId);
     const minute = Math.max(1, session.minute);
     let description = '';
@@ -192,11 +238,17 @@ export class MatchRealtimeService {
       if (payload.team === 'home') {
         session.homeTactic = next;
         session.homeMomentum += 0.6;
-        session.homeMomentumUntil = Math.max(session.homeMomentumUntil, minute + 6);
+        session.homeMomentumUntil = Math.max(
+          session.homeMomentumUntil,
+          minute + 6,
+        );
       } else {
         session.awayTactic = next;
         session.awayMomentum += 0.6;
-        session.awayMomentumUntil = Math.max(session.awayMomentumUntil, minute + 6);
+        session.awayMomentumUntil = Math.max(
+          session.awayMomentumUntil,
+          minute + 6,
+        );
       }
 
       description = `${payload.team === 'home' ? 'Mandante' : 'Visitante'} alterou tática para ${next} (efeito imediato no ritmo).`;
@@ -224,15 +276,23 @@ export class MatchRealtimeService {
     });
 
     this.emitState(session, this.eventsUntilMinute(session, session.minute));
-    return this.toState(session, this.eventsUntilMinute(session, session.minute));
+    return this.toState(
+      session,
+      this.eventsUntilMinute(session, session.minute),
+    );
   }
 
   getState(fixtureId: string) {
     const session = this.sessions.get(fixtureId);
     if (!session) {
-      throw new NotFoundException('Sessão ao vivo não iniciada para este fixture');
+      throw new NotFoundException(
+        'Sessão ao vivo não iniciada para este fixture',
+      );
     }
-    return this.toState(session, this.eventsUntilMinute(session, session.minute));
+    return this.toState(
+      session,
+      this.eventsUntilMinute(session, session.minute),
+    );
   }
 
   private async ensureSession(fixtureId: string) {
@@ -265,7 +325,9 @@ export class MatchRealtimeService {
       const session = this.createSessionFromDetail(fixtureId, detail);
       this.sessions.set(fixtureId, session);
       this.emitState(session, []);
-      this.logger.log(JSON.stringify({ event: 'realtime.bootstrap.reused_match', fixtureId }));
+      this.logger.log(
+        JSON.stringify({ event: 'realtime.bootstrap.reused_match', fixtureId }),
+      );
       return session;
     } catch (error) {
       if (!(error instanceof NotFoundException)) {
@@ -279,10 +341,18 @@ export class MatchRealtimeService {
           throw simulationError;
         }
 
-        this.logger.warn(JSON.stringify({ event: 'realtime.bootstrap.race_recovered', fixtureId }));
+        this.logger.warn(
+          JSON.stringify({
+            event: 'realtime.bootstrap.race_recovered',
+            fixtureId,
+          }),
+        );
 
         const reloadedDetail = await this.matchService.getByFixture(fixtureId);
-        const reloadedSession = this.createSessionFromDetail(fixtureId, reloadedDetail);
+        const reloadedSession = this.createSessionFromDetail(
+          fixtureId,
+          reloadedDetail,
+        );
         this.sessions.set(fixtureId, reloadedSession);
         this.emitState(reloadedSession, []);
         return reloadedSession;
@@ -292,7 +362,12 @@ export class MatchRealtimeService {
       const session = this.createSessionFromDetail(fixtureId, detail);
       this.sessions.set(fixtureId, session);
       this.emitState(session, []);
-      this.logger.log(JSON.stringify({ event: 'realtime.bootstrap.simulated_match', fixtureId }));
+      this.logger.log(
+        JSON.stringify({
+          event: 'realtime.bootstrap.simulated_match',
+          fixtureId,
+        }),
+      );
       return session;
     }
   }
@@ -380,36 +455,55 @@ export class MatchRealtimeService {
       .map((item) => ({ minute: item.minute, description: item.description }));
   }
 
-  private emitState(session: LiveSession, events: Array<{ minute: number; description: string }>) {
+  private emitState(
+    session: LiveSession,
+    events: Array<{ minute: number; description: string }>,
+  ) {
     this.stateSubject.next({
       fixtureId: session.fixtureId,
       state: this.toState(session, events),
     });
   }
 
-  private toState(session: LiveSession, events: Array<{ minute: number; description: string }>): LiveMatchState {
+  private toState(
+    session: LiveSession,
+    events: Array<{ minute: number; description: string }>,
+  ): LiveMatchState {
     const minuteState =
-      [...session.timeline].reverse().find((item) => item.minute <= session.minute) ?? session.timeline[0];
+      [...session.timeline]
+        .reverse()
+        .find((item) => item.minute <= session.minute) ?? session.timeline[0];
 
     const score = {
       home: minuteState?.homeScore ?? 0,
       away: minuteState?.awayScore ?? 0,
     };
 
-    const possessionBias = (session.possession.home - session.possession.away) * 0.28;
+    const possessionBias =
+      (session.possession.home - session.possession.away) * 0.28;
     const scoreBias = (score.home - score.away) * 2.2;
-    const tacticBias = this.tacticBias(session.homeTactic) - this.tacticBias(session.awayTactic);
+    const tacticBias =
+      this.tacticBias(session.homeTactic) - this.tacticBias(session.awayTactic);
     const momentumBias = (session.homeMomentum - session.awayMomentum) * 6;
     const wave = Math.sin(session.minute / 5) * 16;
 
-    let ballX = Math.max(5, Math.min(95, 50 + possessionBias + scoreBias + tacticBias + momentumBias + wave));
+    let ballX = Math.max(
+      5,
+      Math.min(
+        95,
+        50 + possessionBias + scoreBias + tacticBias + momentumBias + wave,
+      ),
+    );
     let ballY = 50 + Math.sin(session.minute / 4) * 18;
 
     const goalAtMinute = session.events.find(
-      (item) => item.minute === session.minute && item.type === MatchEventType.GOAL,
+      (item) =>
+        item.minute === session.minute && item.type === MatchEventType.GOAL,
     );
     if (goalAtMinute) {
-      ballX = goalAtMinute.description.toLowerCase().includes('visitante') ? 8 : 92;
+      ballX = goalAtMinute.description.toLowerCase().includes('visitante')
+        ? 8
+        : 92;
       ballY = 50;
     }
 
@@ -419,7 +513,8 @@ export class MatchRealtimeService {
       isPlaying: session.isPlaying,
       speedMs: session.speedMs,
       score,
-      commentary: session.minute <= 0 ? null : (minuteState?.commentary ?? null),
+      commentary:
+        session.minute <= 0 ? null : (minuteState?.commentary ?? null),
       events,
       tactics: {
         home: session.homeTactic,
@@ -433,7 +528,9 @@ export class MatchRealtimeService {
         x: Number(ballX.toFixed(2)),
         y: Number(ballY.toFixed(2)),
       },
-      coachActions: session.coachActions.filter((item) => item.minute <= session.minute),
+      coachActions: session.coachActions.filter(
+        (item) => item.minute <= session.minute,
+      ),
     };
   }
 

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FinanceAccount } from '../finance/entities/finance-account.entity';
@@ -20,7 +24,9 @@ export class InfrastructureService {
   ) {}
 
   private async ensureSaveExists(saveGameId: string) {
-    const saveGame = await this.saveGameRepository.findOneBy({ id: saveGameId });
+    const saveGame = await this.saveGameRepository.findOneBy({
+      id: saveGameId,
+    });
     if (!saveGame) {
       throw new NotFoundException('Save não encontrado');
     }
@@ -29,7 +35,9 @@ export class InfrastructureService {
   async getBySave(saveGameId: string) {
     await this.ensureSaveExists(saveGameId);
 
-    const existing = await this.infrastructureRepository.findOneBy({ saveGameId });
+    const existing = await this.infrastructureRepository.findOneBy({
+      saveGameId,
+    });
     if (existing) {
       return existing;
     }
@@ -49,10 +57,14 @@ export class InfrastructureService {
 
   async upgrade(payload: UpgradeInfrastructureDto) {
     const infra = await this.getBySave(payload.saveGameId);
-    const account = await this.accountRepository.findOneBy({ saveGameId: payload.saveGameId });
+    const account = await this.accountRepository.findOneBy({
+      saveGameId: payload.saveGameId,
+    });
 
     if (!account) {
-      throw new BadRequestException('Conta financeira não encontrada para este save');
+      throw new BadRequestException(
+        'Conta financeira não encontrada para este save',
+      );
     }
 
     const currentLevel =
@@ -74,17 +86,22 @@ export class InfrastructureService {
     }
 
     const updatePayload: Partial<Infrastructure> = {};
-    if (payload.type === 'training') updatePayload.trainingLevel = currentLevel + 1;
+    if (payload.type === 'training')
+      updatePayload.trainingLevel = currentLevel + 1;
     if (payload.type === 'youth') updatePayload.youthLevel = currentLevel + 1;
-    if (payload.type === 'medical') updatePayload.medicalLevel = currentLevel + 1;
-    if (payload.type === 'stadium') updatePayload.stadiumLevel = currentLevel + 1;
+    if (payload.type === 'medical')
+      updatePayload.medicalLevel = currentLevel + 1;
+    if (payload.type === 'stadium')
+      updatePayload.stadiumLevel = currentLevel + 1;
 
     await this.infrastructureRepository.update(infra.id, updatePayload);
     await this.accountRepository.update(account.id, {
       balance: Number(account.balance) - cost,
     });
 
-    const updated = await this.infrastructureRepository.findOneBy({ id: infra.id });
+    const updated = await this.infrastructureRepository.findOneBy({
+      id: infra.id,
+    });
 
     return {
       infrastructure: updated,

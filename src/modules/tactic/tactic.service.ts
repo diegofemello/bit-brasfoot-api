@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SaveGame } from '../save-game/entities/save-game.entity';
@@ -16,7 +20,9 @@ export class TacticService {
   ) {}
 
   private async ensureSaveExists(saveGameId: string) {
-    const saveGame = await this.saveGameRepository.findOneBy({ id: saveGameId });
+    const saveGame = await this.saveGameRepository.findOneBy({
+      id: saveGameId,
+    });
     if (!saveGame) {
       throw new NotFoundException('Save não encontrado');
     }
@@ -25,7 +31,9 @@ export class TacticService {
   async getBySave(saveGameId: string) {
     await this.ensureSaveExists(saveGameId);
 
-    const existing = await this.tacticRepository.findOne({ where: { saveGameId } });
+    const existing = await this.tacticRepository.findOne({
+      where: { saveGameId },
+    });
     if (existing) {
       return existing;
     }
@@ -76,7 +84,8 @@ export class TacticService {
     this.validateUniqueLineup(nextLineup);
 
     const mergedInstructions = {
-      mentality: payload.mentality ?? tactic.instructions?.mentality ?? 'balanced',
+      mentality:
+        payload.mentality ?? tactic.instructions?.mentality ?? 'balanced',
       pressing: payload.pressing ?? tactic.instructions?.pressing ?? 'medium',
       tempo: payload.tempo ?? tactic.instructions?.tempo ?? 'normal',
     };
@@ -91,11 +100,15 @@ export class TacticService {
   }
 
   private validateUniqueLineup(lineup: Record<string, string>) {
-    const players = Object.values(lineup).filter((player) => player && player.trim().length > 0);
+    const players = Object.values(lineup).filter(
+      (player) => player && player.trim().length > 0,
+    );
     const uniquePlayers = new Set(players);
 
     if (players.length !== uniquePlayers.size) {
-      throw new BadRequestException('Um mesmo jogador não pode ocupar múltiplas posições');
+      throw new BadRequestException(
+        'Um mesmo jogador não pode ocupar múltiplas posições',
+      );
     }
   }
 }

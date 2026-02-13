@@ -63,7 +63,8 @@ export class SimulationService {
           if (event.team === 'away') awayScore += 1;
         }
 
-        const clubName = event.team === 'home' ? input.home.clubName : input.away.clubName;
+        const clubName =
+          event.team === 'home' ? input.home.clubName : input.away.clubName;
         const description = this.commentaryService.eventCommentary({
           type: event.type,
           clubName,
@@ -111,7 +112,8 @@ export class SimulationService {
 
     const strengthBias = (input.home.strength - input.away.strength) / 2.2;
     const tacticBias =
-      this.tacticPossessionBias(input.home.tactic) - this.tacticPossessionBias(input.away.tactic);
+      this.tacticPossessionBias(input.home.tactic) -
+      this.tacticPossessionBias(input.away.tactic);
     const scoreBias = (homeScore - awayScore) * 1.4;
     const randomBias = (Math.random() - 0.5) * 8;
 
@@ -141,10 +143,15 @@ export class SimulationService {
 
   private tacticPossessionBias(tactic: TeamTactic) {
     const mentalityBias =
-      tactic.mentality === 'attacking' ? 2 : tactic.mentality === 'defensive' ? -2 : 0;
+      tactic.mentality === 'attacking'
+        ? 2
+        : tactic.mentality === 'defensive'
+          ? -2
+          : 0;
     const pressingBias =
       tactic.pressing === 'high' ? 1.4 : tactic.pressing === 'low' ? -1.2 : 0;
-    const tempoBias = tactic.tempo === 'high' ? 0.8 : tactic.tempo === 'low' ? -0.6 : 0;
+    const tempoBias =
+      tactic.tempo === 'high' ? 0.8 : tactic.tempo === 'low' ? -0.6 : 0;
 
     return mentalityBias + pressingBias + tempoBias;
   }

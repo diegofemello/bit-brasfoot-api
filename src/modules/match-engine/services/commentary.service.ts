@@ -4,7 +4,8 @@ import { MatchEventType } from '../../match/entities/match-event.entity';
 @Injectable()
 export class CommentaryService {
   minuteCommentary(minute: number, homeClubName: string, awayClubName: string) {
-    if (minute === 1) return `Começa o jogo entre ${homeClubName} e ${awayClubName}.`;
+    if (minute === 1)
+      return `Começa o jogo entre ${homeClubName} e ${awayClubName}.`;
     if (minute === 45) return 'Fim do primeiro tempo.';
     if (minute === 46) return 'Bola rolando para o segundo tempo.';
     if (minute === 90) return 'Fim de partida!';

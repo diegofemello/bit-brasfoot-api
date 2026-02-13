@@ -27,8 +27,13 @@ export class EventGeneratorService {
 
   private probabilityByTactic(tactic: TeamTactic) {
     const mentalityBoost =
-      tactic.mentality === 'attacking' ? 0.012 : tactic.mentality === 'defensive' ? -0.008 : 0;
-    const tempoBoost = tactic.tempo === 'high' ? 0.006 : tactic.tempo === 'low' ? -0.004 : 0;
+      tactic.mentality === 'attacking'
+        ? 0.012
+        : tactic.mentality === 'defensive'
+          ? -0.008
+          : 0;
+    const tempoBoost =
+      tactic.tempo === 'high' ? 0.006 : tactic.tempo === 'low' ? -0.004 : 0;
     return mentalityBoost + tempoBoost;
   }
 
@@ -69,7 +74,8 @@ export class EventGeneratorService {
       this.probabilityByTactic(awayTactic);
 
     if (Math.random() < Math.max(0.004, homeGoalChance)) {
-      const playerName = homePlayers[this.randomInt(0, Math.max(homePlayers.length - 1, 0))];
+      const playerName =
+        homePlayers[this.randomInt(0, Math.max(homePlayers.length - 1, 0))];
       events.push({
         minute,
         team: 'home',
@@ -80,7 +86,8 @@ export class EventGeneratorService {
     }
 
     if (Math.random() < Math.max(0.004, awayGoalChance)) {
-      const playerName = awayPlayers[this.randomInt(0, Math.max(awayPlayers.length - 1, 0))];
+      const playerName =
+        awayPlayers[this.randomInt(0, Math.max(awayPlayers.length - 1, 0))];
       events.push({
         minute,
         team: 'away',
@@ -94,8 +101,12 @@ export class EventGeneratorService {
     if (Math.random() < cardChanceBase) {
       const team = Math.random() < 0.5 ? 'home' : 'away';
       const players = team === 'home' ? homePlayers : awayPlayers;
-      const playerName = players[this.randomInt(0, Math.max(players.length - 1, 0))];
-      const type = Math.random() < 0.85 ? MatchEventType.YELLOW_CARD : MatchEventType.RED_CARD;
+      const playerName =
+        players[this.randomInt(0, Math.max(players.length - 1, 0))];
+      const type =
+        Math.random() < 0.85
+          ? MatchEventType.YELLOW_CARD
+          : MatchEventType.RED_CARD;
       events.push({ minute, team, type, playerName, descriptionHint: 'card' });
     }
 
@@ -103,7 +114,8 @@ export class EventGeneratorService {
     if (Math.random() < injuryChance) {
       const team = Math.random() < 0.5 ? 'home' : 'away';
       const players = team === 'home' ? homePlayers : awayPlayers;
-      const playerName = players[this.randomInt(0, Math.max(players.length - 1, 0))];
+      const playerName =
+        players[this.randomInt(0, Math.max(players.length - 1, 0))];
       events.push({
         minute,
         team,

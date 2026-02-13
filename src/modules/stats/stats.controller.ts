@@ -20,8 +20,14 @@ export class StatsController {
   }
 
   @Get('save/:saveGameId/rankings')
-  getRankings(@Param('saveGameId') saveGameId: string, @Query('limit') limit?: string) {
-    return this.statsService.getPlayerRankings(saveGameId, limit ? Number(limit) : undefined);
+  getRankings(
+    @Param('saveGameId') saveGameId: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.statsService.getPlayerRankings(
+      saveGameId,
+      limit ? Number(limit) : undefined,
+    );
   }
 
   @Get('save/:saveGameId/champions')

@@ -12,7 +12,12 @@ import { Match } from './entities/match.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Match, MatchEvent, MatchTimeline, MatchPlayerRating]),
+    TypeOrmModule.forFeature([
+      Match,
+      MatchEvent,
+      MatchTimeline,
+      MatchPlayerRating,
+    ]),
     CompetitionModule,
   ],
   controllers: [MatchController],

@@ -5,7 +5,12 @@ import { RatingService } from './services/rating.service';
 import { SimulationService } from './services/simulation.service';
 
 @Module({
-  providers: [SimulationService, EventGeneratorService, CommentaryService, RatingService],
+  providers: [
+    SimulationService,
+    EventGeneratorService,
+    CommentaryService,
+    RatingService,
+  ],
   exports: [SimulationService],
 })
 export class MatchEngineModule {}

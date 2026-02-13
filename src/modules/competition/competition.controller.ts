@@ -35,7 +35,10 @@ export class CompetitionController {
   }
 
   @Get('seasons/:seasonId/fixtures')
-  getFixtures(@Param('seasonId') seasonId: string, @Query() query: QuerySeasonFixturesDto) {
+  getFixtures(
+    @Param('seasonId') seasonId: string,
+    @Query() query: QuerySeasonFixturesDto,
+  ) {
     return this.competitionService.getSeasonFixtures(seasonId, query);
   }
 
@@ -45,12 +48,18 @@ export class CompetitionController {
   }
 
   @Get('seasons/:seasonId/top-scorers')
-  getTopScorers(@Param('seasonId') seasonId: string, @Query() query: QueryTopScorersDto) {
+  getTopScorers(
+    @Param('seasonId') seasonId: string,
+    @Query() query: QueryTopScorersDto,
+  ) {
     return this.competitionService.getTopScorers(seasonId, query);
   }
 
   @Post('seasons/:seasonId/simulate-round')
-  simulateRound(@Param('seasonId') seasonId: string, @Query('round') round?: string) {
+  simulateRound(
+    @Param('seasonId') seasonId: string,
+    @Query('round') round?: string,
+  ) {
     const parsedRound = round ? Number(round) : undefined;
     return this.competitionService.simulateRound(seasonId, parsedRound);
   }

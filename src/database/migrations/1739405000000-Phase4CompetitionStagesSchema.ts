@@ -60,17 +60,33 @@ export class Phase4CompetitionStagesSchema1739405000000 implements MigrationInte
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_fixtures_season_stage_round"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_standings_season_stage_group"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_fixtures_season_stage_round"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_standings_season_stage_group"`,
+    );
 
-    await queryRunner.query(`ALTER TABLE "fixtures" DROP COLUMN IF EXISTS "knockout_round"`);
-    await queryRunner.query(`ALTER TABLE "fixtures" DROP COLUMN IF EXISTS "group_name"`);
-    await queryRunner.query(`ALTER TABLE "fixtures" DROP COLUMN IF EXISTS "stage"`);
+    await queryRunner.query(
+      `ALTER TABLE "fixtures" DROP COLUMN IF EXISTS "knockout_round"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "fixtures" DROP COLUMN IF EXISTS "group_name"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "fixtures" DROP COLUMN IF EXISTS "stage"`,
+    );
 
-    await queryRunner.query(`ALTER TABLE "standings" DROP COLUMN IF EXISTS "group_name"`);
-    await queryRunner.query(`ALTER TABLE "standings" DROP COLUMN IF EXISTS "stage"`);
+    await queryRunner.query(
+      `ALTER TABLE "standings" DROP COLUMN IF EXISTS "group_name"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "standings" DROP COLUMN IF EXISTS "stage"`,
+    );
 
-    await queryRunner.query(`DROP TYPE IF EXISTS "fixtures_knockout_round_enum"`);
+    await queryRunner.query(
+      `DROP TYPE IF EXISTS "fixtures_knockout_round_enum"`,
+    );
     await queryRunner.query(`DROP TYPE IF EXISTS "fixtures_stage_enum"`);
     await queryRunner.query(`DROP TYPE IF EXISTS "standings_stage_enum"`);
   }

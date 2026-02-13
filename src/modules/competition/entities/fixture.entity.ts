@@ -36,7 +36,9 @@ export class Fixture {
   @Column({ name: 'season_id' })
   seasonId!: string;
 
-  @ManyToOne(() => CompetitionSeason, (season) => season.fixtures, { onDelete: 'CASCADE' })
+  @ManyToOne(() => CompetitionSeason, (season) => season.fixtures, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'season_id' })
   season!: CompetitionSeason;
 

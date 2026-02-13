@@ -83,7 +83,12 @@ export class TransferProposal {
   })
   status!: TransferProposalStatus;
 
-  @Column({ name: 'response_note', type: 'varchar', length: 200, nullable: true })
+  @Column({
+    name: 'response_note',
+    type: 'varchar',
+    length: 200,
+    nullable: true,
+  })
   responseNote!: string | null;
 
   @CreateDateColumn({ name: 'created_at' })

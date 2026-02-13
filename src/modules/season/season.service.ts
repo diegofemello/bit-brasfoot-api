@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Club } from '../club/entities/club.entity';
@@ -61,7 +65,12 @@ export class SeasonService {
         retirees: 0,
         retireeNames: [] as string[],
         youthGenerated: 0,
-        youthRevealed: [] as Array<{ name: string; position: string; overall: number; potential: number }>,
+        youthRevealed: [] as Array<{
+          name: string;
+          position: string;
+          overall: number;
+          potential: number;
+        }>,
         promotionRelegation: this.promotionRelegationService.process(),
       };
     }
@@ -158,13 +167,19 @@ export class SeasonService {
       throw new BadRequestException('Save sem clube selecionado');
     }
 
-    const player = await this.playerRepository.findOne({ where: { id: playerId } });
+    const player = await this.playerRepository.findOne({
+      where: { id: playerId },
+    });
     if (!player || player.clubId !== save.clubId) {
-      throw new NotFoundException('Jogador da base não encontrado no clube do save');
+      throw new NotFoundException(
+        'Jogador da base não encontrado no clube do save',
+      );
     }
 
     if (player.age > 23) {
-      throw new BadRequestException('Jogador não elegível para promoção da base');
+      throw new BadRequestException(
+        'Jogador não elegível para promoção da base',
+      );
     }
 
     player.overall = Math.min(99, player.overall + 2);
@@ -186,9 +201,13 @@ export class SeasonService {
       throw new BadRequestException('Save sem clube selecionado');
     }
 
-    const player = await this.playerRepository.findOne({ where: { id: playerId } });
+    const player = await this.playerRepository.findOne({
+      where: { id: playerId },
+    });
     if (!player || player.clubId !== save.clubId) {
-      throw new NotFoundException('Jogador da base não encontrado no clube do save');
+      throw new NotFoundException(
+        'Jogador da base não encontrado no clube do save',
+      );
     }
 
     await this.playerRepository.delete(player.id);
@@ -223,14 +242,20 @@ export class SeasonService {
     };
   }
 
-  async renewContract(saveGameId: string, playerId: string, payload: RenewContractDto) {
+  async renewContract(
+    saveGameId: string,
+    playerId: string,
+    payload: RenewContractDto,
+  ) {
     const save = await this.ensureSave(saveGameId);
 
     if (!save.clubId) {
       throw new BadRequestException('Save sem clube selecionado');
     }
 
-    const player = await this.playerRepository.findOne({ where: { id: playerId } });
+    const player = await this.playerRepository.findOne({
+      where: { id: playerId },
+    });
     if (!player || player.clubId !== save.clubId) {
       throw new NotFoundException('Jogador não encontrado no clube do save');
     }
@@ -312,10 +337,15 @@ export class SeasonService {
       .innerJoin(CompetitionSeason, 'season', 'season.id = fixture.seasonId')
       .where('season.saveGameId = :saveGameId', { saveGameId })
       .andWhere('fixture.status = :status', { status: FixtureStatus.SCHEDULED })
-      .andWhere('(fixture.homeClubId = :clubId OR fixture.awayClubId = :clubId)', {
-        clubId: save.clubId,
+      .andWhere(
+        '(fixture.homeClubId = :clubId OR fixture.awayClubId = :clubId)',
+        {
+          clubId: save.clubId,
+        },
+      )
+      .andWhere('fixture.matchDate >= :currentDate', {
+        currentDate: save.currentDate,
       })
-      .andWhere('fixture.matchDate >= :currentDate', { currentDate: save.currentDate })
       .orderBy('fixture.matchDate', 'ASC')
       .addOrderBy('fixture.round', 'ASC')
       .getOne();
@@ -354,7 +384,8 @@ export class SeasonService {
         .createQueryBuilder()
         .update(Player)
         .set({
-          contractYearsRemaining: () => 'GREATEST(contract_years_remaining - 1, 0)',
+          contractYearsRemaining: () =>
+            'GREATEST(contract_years_remaining - 1, 0)',
         })
         .where('club_id = :clubId', { clubId: save.clubId })
         .execute();
@@ -396,7 +427,10 @@ export class SeasonService {
     };
 
     await this.saveGameRepository.save(save);
-    await this.competitionService.finishPreviousSeasons(save.id, nextSeasonYear);
+    await this.competitionService.finishPreviousSeasons(
+      save.id,
+      nextSeasonYear,
+    );
     await this.competitionService.setupSaveCompetitions(save.id);
 
     return {

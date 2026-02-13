@@ -4,8 +4,12 @@ export class Phase3TransfersSchema1739395000000 implements MigrationInterface {
   name = 'Phase3TransfersSchema1739395000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE "players" DROP CONSTRAINT IF EXISTS "FK_players_club"`);
-    await queryRunner.query(`ALTER TABLE "players" ALTER COLUMN "club_id" DROP NOT NULL`);
+    await queryRunner.query(
+      `ALTER TABLE "players" DROP CONSTRAINT IF EXISTS "FK_players_club"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "players" ALTER COLUMN "club_id" DROP NOT NULL`,
+    );
     await queryRunner.query(`
       ALTER TABLE "players"
       ADD CONSTRAINT "FK_players_club"
@@ -83,15 +87,27 @@ export class Phase3TransfersSchema1739395000000 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_transfer_proposals_save_game"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_transfer_listings_save_game"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_transfer_proposals_save_game"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_transfer_listings_save_game"`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS "transfer_proposals"`);
-    await queryRunner.query(`DROP TYPE IF EXISTS "transfer_proposals_status_enum"`);
-    await queryRunner.query(`DROP TYPE IF EXISTS "transfer_proposals_type_enum"`);
+    await queryRunner.query(
+      `DROP TYPE IF EXISTS "transfer_proposals_status_enum"`,
+    );
+    await queryRunner.query(
+      `DROP TYPE IF EXISTS "transfer_proposals_type_enum"`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS "transfer_listings"`);
 
-    await queryRunner.query(`ALTER TABLE "players" DROP CONSTRAINT IF EXISTS "FK_players_club"`);
-    await queryRunner.query(`ALTER TABLE "players" ALTER COLUMN "club_id" SET NOT NULL`);
+    await queryRunner.query(
+      `ALTER TABLE "players" DROP CONSTRAINT IF EXISTS "FK_players_club"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "players" ALTER COLUMN "club_id" SET NOT NULL`,
+    );
     await queryRunner.query(`
       ALTER TABLE "players"
       ADD CONSTRAINT "FK_players_club"

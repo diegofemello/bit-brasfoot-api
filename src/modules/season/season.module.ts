@@ -17,7 +17,13 @@ import { SeasonService } from './season.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SaveGame, Player, Club, Fixture, CompetitionSeason]),
+    TypeOrmModule.forFeature([
+      SaveGame,
+      Player,
+      Club,
+      Fixture,
+      CompetitionSeason,
+    ]),
     CompetitionModule,
     TransferModule,
   ],

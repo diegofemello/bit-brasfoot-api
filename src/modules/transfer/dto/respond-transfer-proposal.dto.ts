@@ -1,4 +1,11 @@
-import { IsIn, IsInt, IsOptional, IsString, Length, Min } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Length,
+  Min,
+} from 'class-validator';
 
 export class RespondTransferProposalDto {
   @IsIn(['accept', 'reject', 'counter', 'cancel'])

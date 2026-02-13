@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Club } from '../club/entities/club.entity';
@@ -75,7 +79,11 @@ export class CareerService {
     ];
   }
 
-  private persistCareerMeta(save: SaveGame, history: CareerHistoryItem[], reputation: number) {
+  private persistCareerMeta(
+    save: SaveGame,
+    history: CareerHistoryItem[],
+    reputation: number,
+  ) {
     save.lastSeasonSummary = {
       ...(save.lastSeasonSummary ?? {}),
       careerHistory: history,
@@ -86,7 +94,10 @@ export class CareerService {
   async getOverview(saveGameId: string) {
     const save = await this.ensureSave(saveGameId);
     const storedReputation = save.lastSeasonSummary?.careerReputation;
-    const liveReputation = Math.min(99, 50 + Math.round((Number(save.club?.budget ?? 0) || 0) / 10_000_000));
+    const liveReputation = Math.min(
+      99,
+      50 + Math.round((Number(save.club?.budget ?? 0) || 0) / 10_000_000),
+    );
     const reputation = save.club ? liveReputation : (storedReputation ?? 50);
 
     return {
@@ -102,7 +113,10 @@ export class CareerService {
 
   async getHistory(saveGameId: string) {
     const save = await this.ensureSave(saveGameId);
-    const history = this.ensureSeedHistory(save, this.extractCareerHistory(save));
+    const history = this.ensureSeedHistory(
+      save,
+      this.extractCareerHistory(save),
+    );
 
     return {
       saveId: save.id,
@@ -159,7 +173,10 @@ export class CareerService {
       },
     ];
 
-    const updatedReputation = Math.min(99, 50 + Math.round((Number(club.budget) || 0) / 10_000_000));
+    const updatedReputation = Math.min(
+      99,
+      50 + Math.round((Number(club.budget) || 0) / 10_000_000),
+    );
     this.persistCareerMeta(save, history, updatedReputation);
 
     save.clubId = club.id;
@@ -180,7 +197,10 @@ export class CareerService {
       throw new BadRequestException('Você já está sem clube');
     }
 
-    const history = this.ensureSeedHistory(save, this.extractCareerHistory(save));
+    const history = this.ensureSeedHistory(
+      save,
+      this.extractCareerHistory(save),
+    );
     const today = this.dateOnly(new Date());
     const currentOpenIndex = history.findIndex((item) => item.toDate === null);
 
@@ -191,7 +211,12 @@ export class CareerService {
       };
     }
 
-    const currentReputation = save.lastSeasonSummary?.careerReputation ?? Math.min(99, 50 + Math.round((Number(save.club?.budget ?? 0) || 0) / 10_000_000));
+    const currentReputation =
+      save.lastSeasonSummary?.careerReputation ??
+      Math.min(
+        99,
+        50 + Math.round((Number(save.club?.budget ?? 0) || 0) / 10_000_000),
+      );
     this.persistCareerMeta(save, history, currentReputation);
 
     save.clubId = null;

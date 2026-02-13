@@ -179,9 +179,15 @@ export class Phase5MatchSimulationSchema1739410000000 implements MigrationInterf
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_match_player_ratings_match"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_match_timelines_match_minute"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_match_events_match_minute"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_match_player_ratings_match"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_match_timelines_match_minute"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_match_events_match_minute"`,
+    );
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_matches_fixture_id"`);
 
     await queryRunner.query(
@@ -200,15 +206,27 @@ export class Phase5MatchSimulationSchema1739410000000 implements MigrationInterf
     );
     await queryRunner.query(`DROP TABLE IF EXISTS "match_timelines"`);
 
-    await queryRunner.query(`ALTER TABLE "match_events" DROP CONSTRAINT IF EXISTS "FK_match_events_player_id"`);
-    await queryRunner.query(`ALTER TABLE "match_events" DROP CONSTRAINT IF EXISTS "FK_match_events_club_id"`);
-    await queryRunner.query(`ALTER TABLE "match_events" DROP CONSTRAINT IF EXISTS "FK_match_events_match_id"`);
+    await queryRunner.query(
+      `ALTER TABLE "match_events" DROP CONSTRAINT IF EXISTS "FK_match_events_player_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "match_events" DROP CONSTRAINT IF EXISTS "FK_match_events_club_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "match_events" DROP CONSTRAINT IF EXISTS "FK_match_events_match_id"`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS "match_events"`);
     await queryRunner.query(`DROP TYPE IF EXISTS "match_events_type_enum"`);
 
-    await queryRunner.query(`ALTER TABLE "matches" DROP CONSTRAINT IF EXISTS "FK_matches_away_club_id"`);
-    await queryRunner.query(`ALTER TABLE "matches" DROP CONSTRAINT IF EXISTS "FK_matches_home_club_id"`);
-    await queryRunner.query(`ALTER TABLE "matches" DROP CONSTRAINT IF EXISTS "FK_matches_fixture_id"`);
+    await queryRunner.query(
+      `ALTER TABLE "matches" DROP CONSTRAINT IF EXISTS "FK_matches_away_club_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "matches" DROP CONSTRAINT IF EXISTS "FK_matches_home_club_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "matches" DROP CONSTRAINT IF EXISTS "FK_matches_fixture_id"`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS "matches"`);
     await queryRunner.query(`DROP TYPE IF EXISTS "matches_status_enum"`);
   }

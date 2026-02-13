@@ -32,7 +32,9 @@ export class MatchService {
     });
 
     if (!match) {
-      throw new NotFoundException('Partida ainda não simulada para este fixture');
+      throw new NotFoundException(
+        'Partida ainda não simulada para este fixture',
+      );
     }
 
     const events = await this.eventRepository.find({
@@ -69,7 +71,9 @@ export class MatchService {
   async getLiveTextByFixture(fixtureId: string) {
     const match = await this.matchRepository.findOne({ where: { fixtureId } });
     if (!match) {
-      throw new NotFoundException('Partida ainda não simulada para este fixture');
+      throw new NotFoundException(
+        'Partida ainda não simulada para este fixture',
+      );
     }
 
     const timeline = await this.timelineRepository.find({
@@ -91,14 +95,20 @@ export class MatchService {
     type: 'substitution' | 'tactic';
     description: string;
   }) {
-    const match = await this.matchRepository.findOne({ where: { fixtureId: params.fixtureId } });
+    const match = await this.matchRepository.findOne({
+      where: { fixtureId: params.fixtureId },
+    });
 
     if (!match) {
-      throw new NotFoundException('Partida não encontrada para registrar ação do técnico');
+      throw new NotFoundException(
+        'Partida não encontrada para registrar ação do técnico',
+      );
     }
 
     const eventType =
-      params.type === 'substitution' ? MatchEventType.SUBSTITUTION : MatchEventType.TACTIC_CHANGE;
+      params.type === 'substitution'
+        ? MatchEventType.SUBSTITUTION
+        : MatchEventType.TACTIC_CHANGE;
 
     const event = this.eventRepository.create({
       matchId: match.id,
@@ -116,7 +126,9 @@ export class MatchService {
     const match = await this.matchRepository.findOne({ where: { fixtureId } });
 
     if (!match) {
-      throw new NotFoundException('Partida não encontrada para limpar ações do técnico');
+      throw new NotFoundException(
+        'Partida não encontrada para limpar ações do técnico',
+      );
     }
 
     await this.eventRepository.delete({

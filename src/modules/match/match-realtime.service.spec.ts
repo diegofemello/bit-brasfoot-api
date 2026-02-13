@@ -29,7 +29,9 @@ describe('MatchRealtimeService', () => {
 
     const getByFixture = jest
       .fn()
-      .mockRejectedValueOnce(new NotFoundException('Partida ainda não simulada para este fixture'))
+      .mockRejectedValueOnce(
+        new NotFoundException('Partida ainda não simulada para este fixture'),
+      )
       .mockResolvedValue(detail);
 
     const matchServiceMock = {
@@ -67,7 +69,9 @@ describe('MatchRealtimeService', () => {
 
     const getByFixture = jest
       .fn()
-      .mockRejectedValueOnce(new NotFoundException('Partida ainda não simulada para este fixture'))
+      .mockRejectedValueOnce(
+        new NotFoundException('Partida ainda não simulada para este fixture'),
+      )
       .mockResolvedValueOnce(detail);
 
     const matchServiceMock = {

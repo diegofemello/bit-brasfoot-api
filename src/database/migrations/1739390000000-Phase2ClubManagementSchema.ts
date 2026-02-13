@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class Phase2ClubManagementSchema1739390000000
-  implements MigrationInterface
-{
+export class Phase2ClubManagementSchema1739390000000 implements MigrationInterface {
   name = 'Phase2ClubManagementSchema1739390000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

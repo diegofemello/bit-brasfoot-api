@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CreateTransferListingDto } from './dto/create-transfer-listing.dto';
 import { CreateTransferProposalDto } from './dto/create-transfer-proposal.dto';
@@ -55,7 +64,10 @@ export class TransferController {
   }
 
   @Patch('proposals/:id/respond')
-  respondProposal(@Param('id') id: string, @Body() payload: RespondTransferProposalDto) {
+  respondProposal(
+    @Param('id') id: string,
+    @Body() payload: RespondTransferProposalDto,
+  ) {
     return this.transferService.respondProposal(id, payload);
   }
 
