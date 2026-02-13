@@ -61,6 +61,7 @@ export class SaveGame {
       overall: number;
       potential: number;
     }>;
+    endedContracts: string[];
     promotionRelegation: {
       promoted: string[];
       relegated: string[];

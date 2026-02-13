@@ -455,6 +455,7 @@ export class CompetitionsPage {
         this.setFeedback('Nova temporada iniciada com sucesso.', false);
         this.loadCompetitions();
         this.advancingSeason.set(false);
+        void this.router.navigateByUrl('/season-kickoff');
       },
       error: (err) => {
         this.setFeedback(this.extractErrorMessage(err, 'Falha ao avançar temporada.'), true);

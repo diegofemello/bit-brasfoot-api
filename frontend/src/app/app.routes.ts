@@ -7,6 +7,7 @@ import { InfrastructurePage } from './features/game/pages/infrastructure/infrast
 import { MatchDayPage } from './features/game/pages/match-day/match-day.page';
 import { PlayerDetailPage } from './features/game/pages/player-detail/player-detail.page';
 import { SeasonSummaryPage } from './features/game/pages/season-summary/season-summary.page';
+import { SeasonKickoffPage } from './features/game/pages/season-kickoff/season-kickoff.page';
 import { SquadPage } from './features/game/pages/squad/squad.page';
 import { TacticsPage } from './features/game/pages/tactics/tactics.page';
 import { TransfersPage } from './features/game/pages/transfers/transfers.page';
@@ -81,6 +82,10 @@ export const routes: Routes = [
   {
     path: 'season-summary',
     component: SeasonSummaryPage,
+  },
+  {
+    path: 'season-kickoff',
+    component: SeasonKickoffPage,
   },
   {
     path: 'match-day/:fixtureId',

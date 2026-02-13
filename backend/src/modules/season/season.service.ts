@@ -322,6 +322,23 @@ export class SeasonService {
         .execute();
     }
 
+    const endedContractPlayers = save.clubId
+      ? await this.playerRepository.find({
+          where: {
+            clubId: save.clubId,
+            contractYearsRemaining: 0,
+          },
+          order: { overall: 'DESC', age: 'ASC' },
+        })
+      : [];
+
+    if (endedContractPlayers.length > 0) {
+      endedContractPlayers.forEach((player) => {
+        player.clubId = null;
+      });
+      await this.playerRepository.save(endedContractPlayers);
+    }
+
     const nextSeasonYear = save.currentSeasonYear + 1;
     const nextDate = new Date(`${save.currentDate}T00:00:00.000Z`);
     nextDate.setFullYear(nextSeasonYear);
@@ -335,6 +352,7 @@ export class SeasonService {
       retireeNames: endSeasonSummary.retireeNames,
       youthGenerated: endSeasonSummary.youthGenerated,
       youthRevealed: endSeasonSummary.youthRevealed,
+      endedContracts: endedContractPlayers.map((player) => player.name),
       promotionRelegation: endSeasonSummary.promotionRelegation,
     };
 
@@ -346,6 +364,7 @@ export class SeasonService {
       saveId: save.id,
       seasonYear: save.currentSeasonYear,
       currentDate: save.currentDate,
+      endedContracts: endedContractPlayers.map((player) => player.name),
       endSeasonSummary,
     };
   }

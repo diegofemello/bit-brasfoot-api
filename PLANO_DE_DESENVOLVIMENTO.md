@@ -1676,12 +1676,12 @@ Para cada clube (fim de temporada):
 
 - [x] Tela de categorias de base (lista, promover, dispensar)
 - [x] Tela de resumo de fim de temporada
-- [ ] Animação de promoção/rebaixamento
+- [x] Animação de promoção/rebaixamento
 - [x] Lista de aposentadorias
 - [x] Lista de novos jogadores revelados
 - [x] Renovação de contratos
 - [x] Botão de avançar dia / avançar até jogo
-- [ ] Tela de início de nova temporada
+- [x] Tela de início de nova temporada
 
 **Entregável:** Ciclo completo de temporada com evolução e base
 
