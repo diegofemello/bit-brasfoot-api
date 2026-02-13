@@ -77,6 +77,7 @@ export class SaveGame {
       role: string;
     }>;
     careerReputation?: number;
+    promotedYouthPlayerIds?: string[];
   } | null;
 
   @CreateDateColumn({ name: 'created_at' })

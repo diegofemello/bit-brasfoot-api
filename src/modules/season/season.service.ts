@@ -123,6 +123,7 @@ export class SeasonService {
 
   async listYouthPlayers(saveGameId: string) {
     const save = await this.ensureSave(saveGameId);
+    const promotedYouthPlayerIds = this.getPromotedYouthPlayerIds(save);
 
     if (!save.clubId) {
       return {
@@ -135,6 +136,12 @@ export class SeasonService {
       .createQueryBuilder('player')
       .where('player.clubId = :clubId', { clubId: save.clubId })
       .andWhere('player.age <= :maxAge', { maxAge: 21 })
+      .andWhere(
+        promotedYouthPlayerIds.length > 0
+          ? 'player.id NOT IN (:...promotedIds)'
+          : '1 = 1',
+        { promotedIds: promotedYouthPlayerIds },
+      )
       .orderBy('player.potential', 'DESC')
       .addOrderBy('player.overall', 'DESC')
       .getMany();
@@ -164,6 +171,7 @@ export class SeasonService {
     player.value = Math.round(player.value * 1.2);
     player.salary = Math.round(player.salary * 1.3);
     const savedPlayer = await this.playerRepository.save(player);
+    await this.markYouthAsPromoted(save, savedPlayer.id);
 
     return {
       success: true,
@@ -339,6 +347,7 @@ export class SeasonService {
   async advanceSeason(saveGameId: string) {
     const save = await this.ensureSave(saveGameId);
     const endSeasonSummary = await this.processEndOfSeason(save);
+    const promotedYouthPlayerIds = this.getPromotedYouthPlayerIds(save);
 
     if (save.clubId) {
       await this.playerRepository
@@ -383,6 +392,7 @@ export class SeasonService {
       youthRevealed: endSeasonSummary.youthRevealed,
       endedContracts: endedContractPlayers.map((player) => player.name),
       promotionRelegation: endSeasonSummary.promotionRelegation,
+      promotedYouthPlayerIds,
     };
 
     await this.saveGameRepository.save(save);
@@ -396,5 +406,34 @@ export class SeasonService {
       endedContracts: endedContractPlayers.map((player) => player.name),
       endSeasonSummary,
     };
+  }
+
+  private getPromotedYouthPlayerIds(save: SaveGame) {
+    return save.lastSeasonSummary?.promotedYouthPlayerIds ?? [];
+  }
+
+  private async markYouthAsPromoted(save: SaveGame, playerId: string) {
+    const promotedIds = new Set(this.getPromotedYouthPlayerIds(save));
+    promotedIds.add(playerId);
+
+    save.lastSeasonSummary = {
+      seasonYear: save.lastSeasonSummary?.seasonYear ?? save.currentSeasonYear,
+      playersProcessed: save.lastSeasonSummary?.playersProcessed ?? 0,
+      retirees: save.lastSeasonSummary?.retirees ?? 0,
+      retireeNames: save.lastSeasonSummary?.retireeNames ?? [],
+      youthGenerated: save.lastSeasonSummary?.youthGenerated ?? 0,
+      youthRevealed: save.lastSeasonSummary?.youthRevealed ?? [],
+      endedContracts: save.lastSeasonSummary?.endedContracts ?? [],
+      promotionRelegation: save.lastSeasonSummary?.promotionRelegation ?? {
+        promoted: [],
+        relegated: [],
+        note: 'Sem dados',
+      },
+      careerHistory: save.lastSeasonSummary?.careerHistory,
+      careerReputation: save.lastSeasonSummary?.careerReputation,
+      promotedYouthPlayerIds: Array.from(promotedIds),
+    };
+
+    await this.saveGameRepository.save(save);
   }
 }
