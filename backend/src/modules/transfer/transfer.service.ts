@@ -1,15 +1,16 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 import { Club } from '../club/entities/club.entity';
 import { FinanceAccount } from '../finance/entities/finance-account.entity';
-import { Player } from '../player/entities/player.entity';
+import { Player, PlayerPosition } from '../player/entities/player.entity';
 import { SaveGame } from '../save-game/entities/save-game.entity';
 import { CreateTransferListingDto } from './dto/create-transfer-listing.dto';
 import { CreateTransferProposalDto } from './dto/create-transfer-proposal.dto';
 import { QueryTransferMarketDto } from './dto/query-transfer-market.dto';
 import { QueryTransferProposalsDto } from './dto/query-transfer-proposals.dto';
 import { RespondTransferProposalDto } from './dto/respond-transfer-proposal.dto';
+import { RunAiTransfersDto } from './dto/run-ai-transfers.dto';
 import { TransferListing } from './entities/transfer-listing.entity';
 import {
   TransferProposal,
@@ -211,6 +212,229 @@ export class TransferService {
     if (payload.type === TransferType.RELEASE && player.clubId === null) {
       throw new BadRequestException('Jogador já está livre no mercado');
     }
+  }
+
+  private async hasOpenProposal(
+    saveGameId: string,
+    playerId: string,
+    fromClubId: string | null,
+    toClubId: string | null,
+  ) {
+    const qb = this.proposalRepository
+      .createQueryBuilder('proposal')
+      .where('proposal.saveGameId = :saveGameId', { saveGameId })
+      .andWhere('proposal.playerId = :playerId', { playerId })
+      .andWhere('proposal.status IN (:...statuses)', {
+        statuses: [TransferProposalStatus.PENDING, TransferProposalStatus.COUNTERED],
+      });
+
+    if (fromClubId === null) {
+      qb.andWhere('proposal.fromClubId IS NULL');
+    } else {
+      qb.andWhere('proposal.fromClubId = :fromClubId', { fromClubId });
+    }
+
+    if (toClubId === null) {
+      qb.andWhere('proposal.toClubId IS NULL');
+    } else {
+      qb.andWhere('proposal.toClubId = :toClubId', { toClubId });
+    }
+
+    const total = await qb.getCount();
+
+    return total > 0;
+  }
+
+  private async hasAnyOpenProposalForPlayer(saveGameId: string, playerId: string) {
+    const total = await this.proposalRepository.count({
+      where: {
+        saveGameId,
+        playerId,
+        status: In([TransferProposalStatus.PENDING, TransferProposalStatus.COUNTERED]),
+      },
+    });
+
+    return total > 0;
+  }
+
+  private orderByWeakestPosition(players: Player[]) {
+    const averagesByPosition = new Map<PlayerPosition, number>();
+    const positions = new Set(players.map((item) => item.position));
+
+    positions.forEach((position) => {
+      const group = players.filter((item) => item.position === position);
+      const average =
+        group.reduce((sum, player) => sum + player.overall, 0) / Math.max(group.length, 1);
+      averagesByPosition.set(position, average);
+    });
+
+    return [...averagesByPosition.entries()]
+      .sort((a, b) => a[1] - b[1])
+      .map(([position]) => position);
+  }
+
+  private suggestedAmount(player: Player) {
+    const floor = Math.max(200_000, Math.round(player.value * 0.75));
+    const ceiling = Math.max(floor, Math.round(player.value * 1.2));
+    const spread = ceiling - floor;
+    return floor + Math.round(Math.random() * spread);
+  }
+
+  async runAiTransferCycle(payload: RunAiTransfersDto) {
+    const save = await this.ensureSaveExists(payload.saveGameId);
+    if (!save.clubId) {
+      throw new BadRequestException('Save sem clube gerenciado para executar IA de transferências');
+    }
+
+    const targetOffers = payload.offers ?? 6;
+    const managedClubId = save.clubId;
+
+    const allClubs = await this.clubRepository.find({ order: { name: 'ASC' } });
+    const aiClubs = allClubs.filter((club) => club.id !== managedClubId);
+
+    const createdProposals: Array<{
+      proposalId: string;
+      type: TransferType;
+      playerName: string;
+      fromClubId: string | null;
+      toClubId: string | null;
+      amount: number | null;
+    }> = [];
+
+    const managedPlayers = await this.playerRepository.find({
+      where: { clubId: managedClubId },
+      order: { overall: 'DESC', value: 'DESC' },
+      take: 12,
+    });
+
+    for (const aiClub of aiClubs) {
+      if (createdProposals.length >= targetOffers) {
+        break;
+      }
+
+      const aiSquad = await this.playerRepository.find({
+        where: { clubId: aiClub.id },
+        order: { overall: 'DESC' },
+      });
+
+      if (aiSquad.length === 0) {
+        continue;
+      }
+
+      const weakestPositions = this.orderByWeakestPosition(aiSquad);
+      const preferredPositions = weakestPositions.slice(0, 2);
+
+      let candidate: Player | null = null;
+      for (const position of preferredPositions) {
+        candidate = await this.playerRepository.findOne({
+          where: {
+            clubId: Not(aiClub.id),
+            position,
+            overall: Not(In([1])),
+          },
+          order: { overall: 'DESC', value: 'ASC' },
+        });
+
+        if (candidate) {
+          break;
+        }
+      }
+
+      if (!candidate || !candidate.clubId) {
+        continue;
+      }
+
+      const duplicate = await this.hasOpenProposal(
+        payload.saveGameId,
+        candidate.id,
+        candidate.clubId,
+        aiClub.id,
+      );
+      const duplicateByPlayer = await this.hasAnyOpenProposalForPlayer(payload.saveGameId, candidate.id);
+      if (duplicate || duplicateByPlayer) {
+        continue;
+      }
+
+      try {
+        const created = await this.createProposal({
+          saveGameId: payload.saveGameId,
+          playerId: candidate.id,
+          fromClubId: candidate.clubId,
+          toClubId: aiClub.id,
+          type: TransferType.PURCHASE,
+          amount: this.suggestedAmount(candidate),
+          note: 'Proposta automática gerada pela IA.',
+        });
+
+        if (created) {
+          createdProposals.push({
+            proposalId: created.id,
+            type: created.type,
+            playerName: created.player?.name ?? candidate.name,
+            fromClubId: created.fromClubId,
+            toClubId: created.toClubId,
+            amount: created.amount,
+          });
+        }
+      } catch {
+        continue;
+      }
+    }
+
+    for (const managedPlayer of managedPlayers.slice(0, 5)) {
+      if (createdProposals.length >= targetOffers) {
+        break;
+      }
+
+      const interestedClub = aiClubs[Math.floor(Math.random() * aiClubs.length)];
+      if (!interestedClub) {
+        break;
+      }
+
+      const duplicate = await this.hasOpenProposal(
+        payload.saveGameId,
+        managedPlayer.id,
+        managedClubId,
+        interestedClub.id,
+      );
+      const duplicateByPlayer = await this.hasAnyOpenProposalForPlayer(payload.saveGameId, managedPlayer.id);
+      if (duplicate || duplicateByPlayer) {
+        continue;
+      }
+
+      try {
+        const created = await this.createProposal({
+          saveGameId: payload.saveGameId,
+          playerId: managedPlayer.id,
+          fromClubId: managedClubId,
+          toClubId: interestedClub.id,
+          type: TransferType.SALE,
+          amount: this.suggestedAmount(managedPlayer),
+          note: 'Oferta automática de clube da IA.',
+        });
+
+        if (created) {
+          createdProposals.push({
+            proposalId: created.id,
+            type: created.type,
+            playerName: created.player?.name ?? managedPlayer.name,
+            fromClubId: created.fromClubId,
+            toClubId: created.toClubId,
+            amount: created.amount,
+          });
+        }
+      } catch {
+        continue;
+      }
+    }
+
+    return {
+      saveGameId: payload.saveGameId,
+      managedClubId,
+      requestedOffers: targetOffers,
+      createdOffers: createdProposals.length,
+      proposals: createdProposals,
+    };
   }
 
   async createProposal(payload: CreateTransferProposalDto) {

@@ -5,6 +5,7 @@ import { CreateTransferProposalDto } from './dto/create-transfer-proposal.dto';
 import { QueryTransferMarketDto } from './dto/query-transfer-market.dto';
 import { QueryTransferProposalsDto } from './dto/query-transfer-proposals.dto';
 import { RespondTransferProposalDto } from './dto/respond-transfer-proposal.dto';
+import { RunAiTransfersDto } from './dto/run-ai-transfers.dto';
 import { TransferService } from './transfer.service';
 
 @ApiTags('transfers')
@@ -45,5 +46,10 @@ export class TransferController {
   @Patch('proposals/:id/respond')
   respondProposal(@Param('id') id: string, @Body() payload: RespondTransferProposalDto) {
     return this.transferService.respondProposal(id, payload);
+  }
+
+  @Post('ai/run')
+  runAiTransfers(@Body() payload: RunAiTransfersDto) {
+    return this.transferService.runAiTransferCycle(payload);
   }
 }

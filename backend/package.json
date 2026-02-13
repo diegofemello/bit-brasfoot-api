@@ -17,7 +17,9 @@
     "migration:run": "typeorm-ts-node-commonjs -d src/config/typeorm.config.ts migration:run",
     "migration:revert": "typeorm-ts-node-commonjs -d src/config/typeorm.config.ts migration:revert",
     "migration:show": "typeorm-ts-node-commonjs -d src/config/typeorm.config.ts migration:show",
-    "migration:generate": "typeorm-ts-node-commonjs -d src/config/typeorm.config.ts migration:generate"
+    "migration:generate": "typeorm-ts-node-commonjs -d src/config/typeorm.config.ts migration:generate",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.13",
@@ -44,6 +46,7 @@
     "@nestjs/cli": "^11.0.16",
     "@nestjs/schematics": "^11.0.9",
     "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
     "@types/node": "^25.2.3",
     "@types/pg": "^8.16.0",
     "eslint": "^9.39.2",
@@ -51,7 +54,9 @@
     "eslint-plugin-prettier": "^5.5.5",
     "globals": "^17.3.0",
     "prettier": "^3.8.1",
+    "jest": "^30.0.5",
     "source-map-support": "^0.5.21",
+    "ts-jest": "^29.4.1",
     "ts-loader": "^9.5.4",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",

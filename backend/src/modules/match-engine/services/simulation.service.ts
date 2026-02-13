@@ -109,9 +109,18 @@ export class SimulationService {
       won: awayScore > homeScore,
     });
 
+    const strengthBias = (input.home.strength - input.away.strength) / 2.2;
+    const tacticBias =
+      this.tacticPossessionBias(input.home.tactic) - this.tacticPossessionBias(input.away.tactic);
+    const scoreBias = (homeScore - awayScore) * 1.4;
+    const randomBias = (Math.random() - 0.5) * 8;
+
     const homePossession = Math.max(
       35,
-      Math.min(65, Math.round(50 + (input.home.strength - input.away.strength) / 3)),
+      Math.min(
+        65,
+        Math.round(50 + strengthBias + tacticBias - scoreBias + randomBias),
+      ),
     );
     const awayPossession = 100 - homePossession;
 
@@ -128,5 +137,15 @@ export class SimulationService {
         awayShots: Math.max(2, Math.round(awayScore * 2 + awayPossession / 10)),
       },
     };
+  }
+
+  private tacticPossessionBias(tactic: TeamTactic) {
+    const mentalityBias =
+      tactic.mentality === 'attacking' ? 2 : tactic.mentality === 'defensive' ? -2 : 0;
+    const pressingBias =
+      tactic.pressing === 'high' ? 1.4 : tactic.pressing === 'low' ? -1.2 : 0;
+    const tempoBias = tactic.tempo === 'high' ? 0.8 : tactic.tempo === 'low' ? -0.6 : 0;
+
+    return mentalityBias + pressingBias + tempoBias;
   }
 }

@@ -30,6 +30,7 @@ interface MatchDetail {
 }
 
 type TeamSide = 'home' | 'away';
+type PlayPhase = 'neutral' | 'attack-home' | 'attack-away' | 'set-piece' | 'goal';
 
 @Component({
   selector: 'app-match-day-page',
@@ -83,82 +84,97 @@ type TeamSide = 'home' | 'away';
                 <div class="absolute right-6 top-1/2 h-16 w-8 -translate-y-1/2 border border-emerald-400/50"></div>
                 <div class="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full border border-emerald-400/40"></div>
 
-                <div class="absolute left-8 top-8 h-2 w-2 rounded-full bg-sky-300"></div>
-                <div class="absolute left-12 top-24 h-2 w-2 rounded-full bg-sky-300"></div>
-                <div class="absolute left-20 top-16 h-2 w-2 rounded-full bg-sky-300"></div>
+                @for (marker of homeMarkers(); track $index) {
+                  <div
+                    class="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-300"
+                    [style.left.%]="marker.x"
+                    [style.top.%]="marker.y"
+                    [style.transition]="markerTransitionStyle()"
+                  ></div>
+                }
 
-                <div class="absolute right-8 top-8 h-2 w-2 rounded-full bg-amber-300"></div>
-                <div class="absolute right-12 top-24 h-2 w-2 rounded-full bg-amber-300"></div>
-                <div class="absolute right-20 top-16 h-2 w-2 rounded-full bg-amber-300"></div>
+                @for (marker of awayMarkers(); track $index) {
+                  <div
+                    class="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-300"
+                    [style.left.%]="marker.x"
+                    [style.top.%]="marker.y"
+                    [style.transition]="markerTransitionStyle()"
+                  ></div>
+                }
 
                 <div
                   class="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow"
                   [style.left.%]="ballPosition()"
                   [style.top.%]="ballVerticalPosition()"
-                  style="transition: left 550ms ease, top 550ms ease"
+                  [style.transition]="markerTransitionStyle()"
                 ></div>
               </div>
 
               <div class="mt-3 flex items-center justify-between text-xs text-slate-300">
                 <span>Minuto {{ visibleMinute() }}'</span>
+                <span class="text-slate-400">{{ currentEventLabel() }}</span>
                 <span>Tática casa: {{ homeTactic() }}</span>
                 <span>Tática fora: {{ awayTactic() }}</span>
               </div>
 
-              <div class="mt-3 flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  (click)="togglePlayback()"
-                  class="rounded bg-emerald-500 px-3 py-1 text-xs font-semibold text-slate-950 hover:bg-emerald-400"
-                >
-                  {{ isPlaying() ? 'Pausar' : 'Iniciar' }}
-                </button>
-                <button
-                  type="button"
-                  (click)="stepMinute()"
-                  class="rounded bg-slate-700 px-3 py-1 text-xs font-semibold hover:bg-slate-600"
-                >
-                  +1 min
-                </button>
-                <button
-                  type="button"
-                  (click)="resetPlayback()"
-                  class="rounded bg-slate-700 px-3 py-1 text-xs font-semibold hover:bg-slate-600"
-                >
-                  Reiniciar
-                </button>
+              @if (!isReadOnlyMatch()) {
+                <div class="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    (click)="togglePlayback()"
+                    class="rounded bg-emerald-500 px-3 py-1 text-xs font-semibold text-slate-950 hover:bg-emerald-400"
+                  >
+                    {{ isPlaying() ? 'Pausar' : 'Iniciar' }}
+                  </button>
+                  <button
+                    type="button"
+                    (click)="stepMinute()"
+                    class="rounded bg-slate-700 px-3 py-1 text-xs font-semibold hover:bg-slate-600"
+                  >
+                    +1 min
+                  </button>
+                  <button
+                    type="button"
+                    (click)="resetPlayback()"
+                    class="rounded bg-slate-700 px-3 py-1 text-xs font-semibold hover:bg-slate-600"
+                  >
+                    Reiniciar
+                  </button>
 
-                <div class="ml-2 flex items-center gap-1 text-xs">
-                  <span class="text-slate-400">Velocidade</span>
-                  <button
-                    type="button"
-                    (click)="setPlaybackSpeed(900)"
-                    class="rounded px-2 py-1"
-                    [class.bg-sky-500]="playbackSpeed() === 900"
-                    [class.bg-slate-700]="playbackSpeedMs() !== 900"
-                  >
-                    1x
-                  </button>
-                  <button
-                    type="button"
-                    (click)="setPlaybackSpeed(500)"
-                    class="rounded px-2 py-1"
-                    [class.bg-sky-500]="playbackSpeed() === 500"
-                    [class.bg-slate-700]="playbackSpeedMs() !== 500"
-                  >
-                    2x
-                  </button>
-                  <button
-                    type="button"
-                    (click)="setPlaybackSpeed(280)"
-                    class="rounded px-2 py-1"
-                    [class.bg-sky-500]="playbackSpeed() === 280"
-                    [class.bg-slate-700]="playbackSpeedMs() !== 280"
-                  >
-                    3x
-                  </button>
+                  <div class="ml-2 flex items-center gap-1 text-xs">
+                    <span class="text-slate-400">Velocidade</span>
+                    <button
+                      type="button"
+                      (click)="setPlaybackSpeed(900)"
+                      class="rounded px-2 py-1"
+                      [class.bg-sky-500]="playbackSpeed() === 900"
+                      [class.bg-slate-700]="playbackSpeedMs() !== 900"
+                    >
+                      1x
+                    </button>
+                    <button
+                      type="button"
+                      (click)="setPlaybackSpeed(500)"
+                      class="rounded px-2 py-1"
+                      [class.bg-sky-500]="playbackSpeed() === 500"
+                      [class.bg-slate-700]="playbackSpeedMs() !== 500"
+                    >
+                      2x
+                    </button>
+                    <button
+                      type="button"
+                      (click)="setPlaybackSpeed(280)"
+                      class="rounded px-2 py-1"
+                      [class.bg-sky-500]="playbackSpeed() === 280"
+                      [class.bg-slate-700]="playbackSpeedMs() !== 280"
+                    >
+                      3x
+                    </button>
+                  </div>
                 </div>
-              </div>
+              } @else {
+                <p class="mt-3 text-xs text-slate-400">Partida finalizada — visualização somente leitura.</p>
+              }
             </div>
           </div>
 
@@ -166,7 +182,7 @@ type TeamSide = 'home' | 'away';
             <div class="rounded-lg border border-slate-800 bg-slate-900 p-4 lg:col-span-2">
               <h3 class="mb-3 text-lg font-semibold">Partida ao vivo (texto)</h3>
               <div id="live-timeline" class="max-h-[420px] space-y-2 overflow-y-auto rounded bg-slate-950 p-3">
-                @for (item of visibleTimeline(); track item.minute) {
+                @for (item of visibleTimeline(); track item.minute + '-' + $index) {
                   <div class="text-sm">
                     <span class="font-semibold text-emerald-300">{{ item.minute }}'</span>
                     <span class="ml-2">{{ item.commentary }}</span>
@@ -194,40 +210,42 @@ type TeamSide = 'home' | 'away';
                 <p class="text-sm text-slate-400">Estatísticas finais serão exibidas ao término da simulação.</p>
               }
 
-              <h4 class="mt-5 text-sm font-semibold text-slate-300">Ações do técnico (ao vivo)</h4>
-              <div class="mt-2 grid gap-2">
-                <button
-                  type="button"
-                  (click)="requestSubstitution('home')"
-                  class="rounded bg-slate-700 px-3 py-1 text-left text-xs font-semibold hover:bg-slate-600"
-                >
-                  Substituição mandante
-                </button>
+              @if (!isReadOnlyMatch()) {
+                <h4 class="mt-5 text-sm font-semibold text-slate-300">Ações do técnico (ao vivo)</h4>
+                <div class="mt-2 grid gap-2">
+                  <button
+                    type="button"
+                    (click)="requestSubstitution('home')"
+                    class="rounded bg-slate-700 px-3 py-1 text-left text-xs font-semibold hover:bg-slate-600"
+                  >
+                    Substituição mandante
+                  </button>
 
-                <button
-                  type="button"
-                  (click)="requestSubstitution('away')"
-                  class="rounded bg-slate-700 px-3 py-1 text-left text-xs font-semibold hover:bg-slate-600"
-                >
-                  Substituição visitante
-                </button>
+                  <button
+                    type="button"
+                    (click)="requestSubstitution('away')"
+                    class="rounded bg-slate-700 px-3 py-1 text-left text-xs font-semibold hover:bg-slate-600"
+                  >
+                    Substituição visitante
+                  </button>
 
-                <button
-                  type="button"
-                  (click)="toggleHomeTactic()"
-                  class="rounded bg-slate-700 px-3 py-1 text-left text-xs font-semibold hover:bg-slate-600"
-                >
-                  Trocar tática do mandante
-                </button>
+                  <button
+                    type="button"
+                    (click)="toggleHomeTactic()"
+                    class="rounded bg-slate-700 px-3 py-1 text-left text-xs font-semibold hover:bg-slate-600"
+                  >
+                    Trocar tática do mandante
+                  </button>
 
-                <button
-                  type="button"
-                  (click)="toggleAwayTactic()"
-                  class="rounded bg-slate-700 px-3 py-1 text-left text-xs font-semibold hover:bg-slate-600"
-                >
-                  Trocar tática do visitante
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    (click)="toggleAwayTactic()"
+                    class="rounded bg-slate-700 px-3 py-1 text-left text-xs font-semibold hover:bg-slate-600"
+                  >
+                    Trocar tática do visitante
+                  </button>
+                </div>
+              }
             </div>
           </div>
 
@@ -251,36 +269,59 @@ type TeamSide = 'home' | 'away';
   `,
 })
 export class MatchDayPage {
-  private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly api = inject(ApiService);
   private readonly matchLiveSocket = inject(MatchLiveSocketService);
 
   readonly fixture = signal<Fixture | null>(null);
   readonly detail = signal<MatchDetail | null>(null);
   readonly simulating = signal(false);
-  readonly message = signal<string | null>(null);
+  readonly message = signal('');
   readonly isError = signal(false);
   readonly loadingDetail = signal(false);
   readonly sessionStarted = signal(false);
-
-  readonly liveState = this.matchLiveSocket.state;
-  readonly socketError = this.matchLiveSocket.lastError;
+  readonly readOnlyMode = signal(false);
   readonly preferredHomeTactic = signal<LiveTactic>('balanced');
   readonly preferredAwayTactic = signal<LiveTactic>('balanced');
+  readonly liveState = this.matchLiveSocket.state;
 
-  private readonly timelineScrollEffect = effect(() => {
+  private fixtureStatusInitialized = false;
+
+  readonly timelineScrollEffect = effect(() => {
     const minute = this.visibleMinute();
-    if (minute <= 0) {
-      return;
-    }
+    if (minute <= 0) return;
 
-    queueMicrotask(() => {
+    setTimeout(() => {
       const container = document.getElementById('live-timeline');
       if (container) {
         container.scrollTop = container.scrollHeight;
       }
-    });
+    }, 0);
   });
+
+  constructor() {
+    effect(() => {
+      const lastError = this.matchLiveSocket.lastError();
+      if (!lastError) return;
+      this.message.set(this.userFriendlyRealtimeError(lastError));
+      this.isError.set(true);
+    });
+
+    effect(() => {
+      const state = this.liveState();
+      const fixtureId = this.fixture()?.id;
+      if (!state || !fixtureId) return;
+
+      if (state.minute > 0 || state.isPlaying) {
+        this.sessionStarted.set(true);
+      }
+
+      if (state.minute >= 90) {
+        this.loadDetail(fixtureId, false);
+        this.loadFixture(fixtureId);
+      }
+    });
+  }
 
   ngOnInit() {
     const fixtureId = this.route.snapshot.paramMap.get('fixtureId');
@@ -290,7 +331,13 @@ export class MatchDayPage {
     this.loadFixture(fixtureId);
 
     this.matchLiveSocket.joinMatch(fixtureId);
+
     setTimeout(() => {
+      if (this.isReadOnlyMatch()) {
+        this.sessionStarted.set(false);
+        return;
+      }
+
       this.matchLiveSocket.control(fixtureId, 'reset');
       this.sessionStarted.set(false);
     }, 180);
@@ -316,25 +363,41 @@ export class MatchDayPage {
   }
 
   currentHomeScore() {
+    if (this.isReadOnlyMatch()) {
+      return this.detail()?.match.homeScore ?? 0;
+    }
     if (!this.sessionStarted()) return 0;
     return this.liveState()?.score.home ?? this.detail()?.match.homeScore ?? 0;
   }
 
   currentAwayScore() {
+    if (this.isReadOnlyMatch()) {
+      return this.detail()?.match.awayScore ?? 0;
+    }
     if (!this.sessionStarted()) return 0;
     return this.liveState()?.score.away ?? this.detail()?.match.awayScore ?? 0;
   }
 
   isFinished() {
+    if (this.isReadOnlyMatch()) return true;
     return this.sessionStarted() && this.visibleMinute() >= 90;
   }
 
   visibleMinute() {
+    if (this.isReadOnlyMatch()) {
+      const maxMinute = (this.detail()?.timeline ?? []).at(-1)?.minute;
+      return maxMinute ?? 90;
+    }
     if (!this.sessionStarted()) return 0;
     return this.liveState()?.minute ?? 0;
   }
 
+  isReadOnlyMatch() {
+    return this.readOnlyMode();
+  }
+
   isPlaying() {
+    if (this.isReadOnlyMatch()) return false;
     return this.liveState()?.isPlaying ?? false;
   }
 
@@ -355,30 +418,220 @@ export class MatchDayPage {
   }
 
   visibleTimeline() {
+    if (this.isReadOnlyMatch()) return this.detail()?.timeline ?? [];
     if (!this.sessionStarted()) return [];
     const minute = this.visibleMinute();
     return (this.detail()?.timeline ?? []).filter((item) => item.minute <= minute);
   }
 
   visibleEvents() {
+    if (this.isReadOnlyMatch()) return this.detail()?.events ?? [];
     if (!this.sessionStarted()) return [];
     return this.liveState()?.events ?? [];
   }
 
   visibleCoachActions() {
+    if (this.isReadOnlyMatch()) return [];
     if (!this.sessionStarted()) return [];
     return this.liveState()?.coachActions ?? [];
   }
 
   ballPosition() {
-    return this.liveState()?.ball.x ?? 50;
+    if (this.isReadOnlyMatch()) {
+      const home = this.detail()?.match.homePossession ?? 50;
+      return Math.max(8, Math.min(92, home));
+    }
+
+    const base = this.liveState()?.ball.x ?? 50;
+    const phase = this.currentPhase();
+    const eventTeam = this.eventTeam();
+    const minuteWave = Math.sin(this.visibleMinute() / 2.1) * 2.8;
+
+    if (phase === 'goal' && eventTeam === 'home') return 92;
+    if (phase === 'goal' && eventTeam === 'away') return 8;
+    if (phase === 'set-piece' && eventTeam === 'home') return Math.max(60, Math.min(90, base + 10));
+    if (phase === 'set-piece' && eventTeam === 'away') return Math.max(10, Math.min(40, base - 10));
+    if (phase === 'attack-home') return Math.max(45, Math.min(92, base + 5 + minuteWave));
+    if (phase === 'attack-away') return Math.max(8, Math.min(55, base - 5 + minuteWave));
+
+    return Math.max(8, Math.min(92, base + minuteWave));
   }
 
   ballVerticalPosition() {
-    return this.liveState()?.ball.y ?? 50;
+    if (this.isReadOnlyMatch()) {
+      return 50;
+    }
+
+    const base = this.liveState()?.ball.y ?? 50;
+    const phase = this.currentPhase();
+    const eventTeam = this.eventTeam();
+    const laneWave = Math.cos(this.visibleMinute() / 2.8) * 4.6;
+
+    if (phase === 'goal') {
+      return eventTeam === 'home' ? 42 : 58;
+    }
+
+    if (phase === 'set-piece') {
+      return Math.max(28, Math.min(72, 50 + laneWave));
+    }
+
+    return Math.max(16, Math.min(84, base + laneWave));
+  }
+
+  homeMarkers() {
+    return this.buildTeamMarkers('home');
+  }
+
+  awayMarkers() {
+    return this.buildTeamMarkers('away');
+  }
+
+  currentEventLabel() {
+    const phase = this.currentPhase();
+
+    if (phase === 'goal') return '⚽ Lance de gol';
+    if (phase === 'set-piece') return '🎯 Bola parada';
+    if (phase === 'attack-home') return '▶ Pressão do mandante';
+    if (phase === 'attack-away') return '◀ Pressão do visitante';
+    return '⏱ Jogo corrido';
+  }
+
+  private buildTeamMarkers(side: TeamSide) {
+    const minute = this.visibleMinute();
+    const ballX = this.ballPosition();
+    const ballY = this.ballVerticalPosition();
+    const phase = this.currentPhase();
+
+    const homeBase = [
+      { x: 10, y: 50 },
+      { x: 20, y: 18 },
+      { x: 20, y: 38 },
+      { x: 20, y: 62 },
+      { x: 20, y: 82 },
+      { x: 33, y: 30 },
+      { x: 33, y: 50 },
+      { x: 33, y: 70 },
+      { x: 45, y: 24 },
+      { x: 48, y: 50 },
+      { x: 45, y: 76 },
+    ];
+
+    const awayBase = homeBase.map((item) => ({ x: 100 - item.x, y: item.y }));
+    const base = side === 'home' ? homeBase : awayBase;
+
+    const phaseAdvance = this.phaseAdvance(side, phase);
+    const ballInfluence = side === 'home' ? (ballX - 50) * 0.1 : (50 - ballX) * 0.1;
+    const compactness = this.phaseCompactness(phase);
+
+    return base.map((marker, index) => {
+      const microWaveX = Math.sin(minute / 2.4 + index * 0.65) * 1.2;
+      const microWaveY = Math.cos(minute / 2.2 + index * 0.55) * 1.6;
+      const yBias = (ballY - 50) * 0.08;
+
+      return {
+        x: Math.max(6, Math.min(94, marker.x + phaseAdvance + ballInfluence + microWaveX)),
+        y: Math.max(10, Math.min(90, 50 + (marker.y - 50) * compactness + microWaveY + yBias)),
+      };
+    });
+  }
+
+  private phaseAdvance(side: TeamSide, phase: PlayPhase) {
+    if (phase === 'attack-home') return side === 'home' ? 7 : -5;
+    if (phase === 'attack-away') return side === 'away' ? -7 : 5;
+    if (phase === 'set-piece') {
+      const eventTeam = this.eventTeam();
+      if (eventTeam === 'home') return side === 'home' ? 9 : -7;
+      if (eventTeam === 'away') return side === 'away' ? -9 : 7;
+    }
+    if (phase === 'goal') {
+      const eventTeam = this.eventTeam();
+      if (eventTeam === 'home') return side === 'home' ? 10 : -8;
+      if (eventTeam === 'away') return side === 'away' ? -10 : 8;
+    }
+    return 0;
+  }
+
+  private phaseCompactness(phase: PlayPhase) {
+    if (phase === 'set-piece' || phase === 'goal') return 0.88;
+    if (phase === 'attack-home' || phase === 'attack-away') return 0.93;
+    return 1;
+  }
+
+  private currentPhase(): PlayPhase {
+    const latestEvent = this.latestEventAtCurrentMinute();
+    if (!latestEvent) {
+      const ballX = this.liveState()?.ball.x ?? 50;
+      if (ballX >= 58) return 'attack-home';
+      if (ballX <= 42) return 'attack-away';
+      return 'neutral';
+    }
+
+    const text = latestEvent.toLowerCase();
+    if (text.includes('gol')) return 'goal';
+    if (text.includes('cartão') || text.includes('lesão') || text.includes('substituição')) return 'set-piece';
+
+    const team = this.eventTeam();
+    if (team === 'home') return 'attack-home';
+    if (team === 'away') return 'attack-away';
+    return 'neutral';
+  }
+
+  private eventTeam(): TeamSide | null {
+    const latestEvent = this.latestVisibleEventDescription();
+    if (!latestEvent) return null;
+
+    const homeName = this.fixture()?.homeClub?.name?.toLowerCase() ?? '';
+    const awayName = this.fixture()?.awayClub?.name?.toLowerCase() ?? '';
+    const lowerEvent = latestEvent.toLowerCase();
+
+    if (homeName && lowerEvent.includes(homeName)) return 'home';
+    if (awayName && lowerEvent.includes(awayName)) return 'away';
+    if (lowerEvent.includes('mandante')) return 'home';
+    if (lowerEvent.includes('visitante')) return 'away';
+    return null;
+  }
+
+  private latestVisibleEventDescription() {
+    const events = this.visibleEvents();
+    if (events.length === 0) return null;
+
+    const minute = this.visibleMinute();
+    const eventsAtCurrentMinute = events.filter((event) => event.minute === minute);
+    const source = eventsAtCurrentMinute.length > 0 ? eventsAtCurrentMinute : events;
+    return source[source.length - 1]?.description ?? null;
+  }
+
+  private latestEventAtCurrentMinute() {
+    const events = this.visibleEvents();
+    if (events.length === 0) return null;
+
+    const minute = this.visibleMinute();
+    const eventsAtCurrentMinute = events.filter((event) => event.minute === minute);
+    return eventsAtCurrentMinute[eventsAtCurrentMinute.length - 1]?.description ?? null;
+  }
+
+  markerTransitionStyle() {
+    const speed = this.playbackSpeedMs();
+    const duration = Math.max(180, Math.min(700, Math.round(speed * 0.72)));
+    return `left ${duration}ms ease, top ${duration}ms ease`;
+  }
+
+  private userFriendlyRealtimeError(message: string) {
+    const normalized = message.toLowerCase();
+
+    if (normalized.includes('uq_matches_fixture_id') || normalized.includes('restrição de unicidade')) {
+      return 'A transmissão já está preparada para esta partida. Recarregue a tela e tente novamente.';
+    }
+
+    if (normalized.includes('fixtureid é obrigatório')) {
+      return 'Não foi possível identificar a partida para transmissão.';
+    }
+
+    return 'Não foi possível concluir a ação ao vivo agora. Tente novamente em instantes.';
   }
 
   requestSubstitution(side: TeamSide) {
+    if (this.isReadOnlyMatch()) return;
     if (!this.sessionStarted()) return;
     const fixtureId = this.fixture()?.id;
     if (!fixtureId) return;
@@ -390,6 +643,7 @@ export class MatchDayPage {
   }
 
   toggleHomeTactic() {
+    if (this.isReadOnlyMatch()) return;
     if (!this.sessionStarted()) return;
     const fixtureId = this.fixture()?.id;
     if (!fixtureId) return;
@@ -402,6 +656,7 @@ export class MatchDayPage {
   }
 
   toggleAwayTactic() {
+    if (this.isReadOnlyMatch()) return;
     if (!this.sessionStarted()) return;
     const fixtureId = this.fixture()?.id;
     if (!fixtureId) return;
@@ -414,6 +669,7 @@ export class MatchDayPage {
   }
 
   togglePlayback() {
+    if (this.isReadOnlyMatch()) return;
     const fixtureId = this.fixture()?.id;
     if (!fixtureId) return;
 
@@ -432,6 +688,7 @@ export class MatchDayPage {
   }
 
   stepMinute() {
+    if (this.isReadOnlyMatch()) return;
     const fixtureId = this.fixture()?.id;
     if (!fixtureId) return;
 
@@ -444,6 +701,7 @@ export class MatchDayPage {
   }
 
   resetPlayback() {
+    if (this.isReadOnlyMatch()) return;
     const fixtureId = this.fixture()?.id;
     if (!fixtureId) return;
 
@@ -452,15 +710,18 @@ export class MatchDayPage {
   }
 
   setPlaybackSpeed(value: number) {
+    if (this.isReadOnlyMatch()) return;
     const fixtureId = this.fixture()?.id;
     if (!fixtureId) return;
     this.matchLiveSocket.control(fixtureId, 'speed', value);
   }
 
   simulate() {
+    if (this.isReadOnlyMatch()) return;
     const fixtureId = this.fixture()?.id;
     if (!fixtureId) return;
 
+    this.readOnlyMode.set(false);
     this.simulating.set(true);
     this.matchLiveSocket.control(fixtureId, 'start');
     this.sessionStarted.set(true);
@@ -477,6 +738,15 @@ export class MatchDayPage {
     this.api.get<Fixture>(`competitions/fixtures/${fixtureId}`).subscribe({
       next: (fixture) => {
         this.fixture.set(fixture);
+
+        if (!this.fixtureStatusInitialized) {
+          this.readOnlyMode.set(fixture.status === 'played');
+          this.fixtureStatusInitialized = true;
+        }
+
+        if (fixture.status === 'played' && this.readOnlyMode()) {
+          this.sessionStarted.set(false);
+        }
         if (fixture.status === 'played' || this.liveState()) {
           this.loadDetail(fixtureId, false);
           return;

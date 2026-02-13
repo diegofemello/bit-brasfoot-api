@@ -1700,14 +1700,17 @@ Para cada clube (fim de temporada):
 
 ### Fase 7 — IA e Transferências Automáticas (Sprint 20-21) — ~2 semanas
 
+> Fase iniciada em 13/02/2026.
+
 **Backend:**
 
 - [ ] IA de transferências para clubes não gerenciados
 - [ ] Clubes da IA avaliam elenco e fazem contratações
-- [ ] Geração automática de propostas (para o jogador e entre clubes)
+- [x] Geração automática de propostas (para o jogador e entre clubes)
 - [ ] IA aceita/rejeita propostas baseada em critérios lógicos
 - [ ] Rotação de elenco da IA (substituir jogadores velhos)
 - [ ] Propostas de emprego (outros clubes convidam o manager)
+- [x] Endpoint para executar ciclo de IA de transferências (`POST /transfers/ai/run`)
 
 **Frontend:**
 

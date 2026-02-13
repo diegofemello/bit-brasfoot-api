@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -20,6 +21,7 @@ import { MatchRealtimeService } from './match-realtime.service';
 export class MatchLiveGateway implements OnGatewayInit, OnGatewayConnection {
   @WebSocketServer()
   server!: Server;
+  private readonly logger = new Logger(MatchLiveGateway.name);
 
   constructor(private readonly realtimeService: MatchRealtimeService) {}
 
@@ -30,6 +32,7 @@ export class MatchLiveGateway implements OnGatewayInit, OnGatewayConnection {
   }
 
   handleConnection(client: Socket) {
+    this.logger.log(JSON.stringify({ event: 'match_live.connected', socketId: client.id }));
     client.emit('match_connected', { ok: true });
   }
 
@@ -45,7 +48,11 @@ export class MatchLiveGateway implements OnGatewayInit, OnGatewayConnection {
       await client.join(this.roomName(fixtureId));
       const state = await this.realtimeService.join(fixtureId);
       client.emit('match_state', state);
+      this.logger.log(JSON.stringify({ event: 'match_live.join', fixtureId, socketId: client.id }));
     } catch (error) {
+      this.logger.error(
+        JSON.stringify({ event: 'match_live.join_failed', socketId: client.id, error: this.toMessage(error) }),
+      );
       client.emit('match_error', { message: this.toMessage(error) });
     }
   }
@@ -58,6 +65,7 @@ export class MatchLiveGateway implements OnGatewayInit, OnGatewayConnection {
     }
 
     await client.leave(this.roomName(fixtureId));
+    this.logger.log(JSON.stringify({ event: 'match_live.leave', fixtureId, socketId: client.id }));
   }
 
   @SubscribeMessage('match_control')
@@ -85,7 +93,26 @@ export class MatchLiveGateway implements OnGatewayInit, OnGatewayConnection {
       if (payload.action === 'speed') {
         await this.realtimeService.setSpeed(fixtureId, payload.speedMs ?? 900);
       }
+
+      this.logger.log(
+        JSON.stringify({
+          event: 'match_live.control',
+          fixtureId,
+          action: payload.action,
+          speedMs: payload.speedMs ?? null,
+          socketId: client.id,
+        }),
+      );
     } catch (error) {
+      this.logger.error(
+        JSON.stringify({
+          event: 'match_live.control_failed',
+          socketId: client.id,
+          fixtureId: payload?.fixtureId ?? null,
+          action: payload?.action ?? null,
+          error: this.toMessage(error),
+        }),
+      );
       client.emit('match_error', { message: this.toMessage(error) });
     }
   }
@@ -113,7 +140,26 @@ export class MatchLiveGateway implements OnGatewayInit, OnGatewayConnection {
         type: payload.type,
         tactic: payload.tactic,
       });
+
+      this.logger.log(
+        JSON.stringify({
+          event: 'match_live.coach_action',
+          fixtureId,
+          team: payload.team,
+          type: payload.type,
+          tactic: payload.tactic ?? null,
+          socketId: client.id,
+        }),
+      );
     } catch (error) {
+      this.logger.error(
+        JSON.stringify({
+          event: 'match_live.coach_action_failed',
+          fixtureId: payload?.fixtureId ?? null,
+          socketId: client.id,
+          error: this.toMessage(error),
+        }),
+      );
       client.emit('match_error', { message: this.toMessage(error) });
     }
   }

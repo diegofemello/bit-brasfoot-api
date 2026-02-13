@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { Subject } from 'rxjs';
 import { MatchEventType } from './entities/match-event.entity';
 import { MatchService } from './match.service';
@@ -63,7 +64,9 @@ interface LiveSession {
 @Injectable()
 export class MatchRealtimeService {
   private readonly sessions = new Map<string, LiveSession>();
+  private readonly sessionInitialization = new Map<string, Promise<LiveSession>>();
   private readonly stateSubject = new Subject<{ fixtureId: string; state: LiveMatchState }>();
+  private readonly logger = new Logger(MatchRealtimeService.name);
   readonly state$ = this.stateSubject.asObservable();
 
   constructor(private readonly matchService: MatchService) {}
@@ -103,6 +106,7 @@ export class MatchRealtimeService {
     session.isPlaying = true;
     this.startTimer(session);
     this.emitState(session, this.eventsUntilMinute(session, session.minute));
+    this.logger.log(JSON.stringify({ event: 'realtime.start', fixtureId, minute: session.minute }));
     return this.toState(session, this.eventsUntilMinute(session, session.minute));
   }
 
@@ -139,6 +143,7 @@ export class MatchRealtimeService {
     session.awayMomentumUntil = 0;
     this.stopTimer(session);
     this.emitState(session, this.eventsUntilMinute(session, session.minute));
+    this.logger.log(JSON.stringify({ event: 'realtime.reset', fixtureId }));
     return this.toState(session, this.eventsUntilMinute(session, session.minute));
   }
 
@@ -227,10 +232,29 @@ export class MatchRealtimeService {
     if (!session) {
       throw new NotFoundException('Sessão ao vivo não iniciada para este fixture');
     }
-    return this.toState(session, []);
+    return this.toState(session, this.eventsUntilMinute(session, session.minute));
   }
 
   private async ensureSession(fixtureId: string) {
+    const existing = this.sessions.get(fixtureId);
+    if (existing) {
+      return existing;
+    }
+
+    const initializing = this.sessionInitialization.get(fixtureId);
+    if (initializing) {
+      return initializing;
+    }
+
+    const bootstrapPromise = this.bootstrapSession(fixtureId).finally(() => {
+      this.sessionInitialization.delete(fixtureId);
+    });
+
+    this.sessionInitialization.set(fixtureId, bootstrapPromise);
+    return bootstrapPromise;
+  }
+
+  private async bootstrapSession(fixtureId: string) {
     const existing = this.sessions.get(fixtureId);
     if (existing) {
       return existing;
@@ -241,15 +265,40 @@ export class MatchRealtimeService {
       const session = this.createSessionFromDetail(fixtureId, detail);
       this.sessions.set(fixtureId, session);
       this.emitState(session, []);
+      this.logger.log(JSON.stringify({ event: 'realtime.bootstrap.reused_match', fixtureId }));
       return session;
-    } catch {
-      await this.matchService.simulateByFixture(fixtureId);
+    } catch (error) {
+      if (!(error instanceof NotFoundException)) {
+        throw error;
+      }
+
+      try {
+        await this.matchService.simulateByFixture(fixtureId);
+      } catch (simulationError) {
+        if (!this.isFixtureAlreadySimulatedError(simulationError)) {
+          throw simulationError;
+        }
+
+        this.logger.warn(JSON.stringify({ event: 'realtime.bootstrap.race_recovered', fixtureId }));
+
+        const reloadedDetail = await this.matchService.getByFixture(fixtureId);
+        const reloadedSession = this.createSessionFromDetail(fixtureId, reloadedDetail);
+        this.sessions.set(fixtureId, reloadedSession);
+        this.emitState(reloadedSession, []);
+        return reloadedSession;
+      }
+
       const detail = await this.matchService.getByFixture(fixtureId);
       const session = this.createSessionFromDetail(fixtureId, detail);
       this.sessions.set(fixtureId, session);
       this.emitState(session, []);
+      this.logger.log(JSON.stringify({ event: 'realtime.bootstrap.simulated_match', fixtureId }));
       return session;
     }
+  }
+
+  private isFixtureAlreadySimulatedError(error: unknown) {
+    return error instanceof BadRequestException;
   }
 
   private createSessionFromDetail(
@@ -353,8 +402,16 @@ export class MatchRealtimeService {
     const momentumBias = (session.homeMomentum - session.awayMomentum) * 6;
     const wave = Math.sin(session.minute / 5) * 16;
 
-    const ballX = Math.max(5, Math.min(95, 50 + possessionBias + scoreBias + tacticBias + momentumBias + wave));
-    const ballY = 50 + Math.sin(session.minute / 4) * 18;
+    let ballX = Math.max(5, Math.min(95, 50 + possessionBias + scoreBias + tacticBias + momentumBias + wave));
+    let ballY = 50 + Math.sin(session.minute / 4) * 18;
+
+    const goalAtMinute = session.events.find(
+      (item) => item.minute === session.minute && item.type === MatchEventType.GOAL,
+    );
+    if (goalAtMinute) {
+      ballX = goalAtMinute.description.toLowerCase().includes('visitante') ? 8 : 92;
+      ballY = 50;
+    }
 
     return {
       fixtureId: session.fixtureId,
