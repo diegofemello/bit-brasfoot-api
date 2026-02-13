@@ -6,6 +6,16 @@ import { SaveGame } from '../save-game/entities/save-game.entity';
 import { QueryAiFeedDto } from '../transfer/dto/query-ai-feed.dto';
 import { TransferService } from '../transfer/transfer.service';
 
+type CareerHistoryItem = {
+  clubId: string;
+  clubName: string;
+  countryName: string | null;
+  leagueName: string | null;
+  fromDate: string;
+  toDate: string | null;
+  role: string;
+};
+
 @Injectable()
 export class CareerService {
   constructor(
@@ -29,8 +39,55 @@ export class CareerService {
     return save;
   }
 
+  private dateOnly(value: Date | string) {
+    if (value instanceof Date) {
+      return value.toISOString().slice(0, 10);
+    }
+
+    return String(value).slice(0, 10);
+  }
+
+  private extractCareerHistory(save: SaveGame): CareerHistoryItem[] {
+    return Array.isArray(save.lastSeasonSummary?.careerHistory)
+      ? [...(save.lastSeasonSummary?.careerHistory as CareerHistoryItem[])]
+      : [];
+  }
+
+  private ensureSeedHistory(save: SaveGame, history: CareerHistoryItem[]) {
+    if (history.length > 0) {
+      return history;
+    }
+
+    if (!save.club) {
+      return history;
+    }
+
+    return [
+      {
+        clubId: save.club.id,
+        clubName: save.club.name,
+        countryName: save.club.league?.country?.name ?? null,
+        leagueName: save.club.league?.name ?? null,
+        fromDate: this.dateOnly(save.createdAt),
+        toDate: null,
+        role: 'Manager',
+      },
+    ];
+  }
+
+  private persistCareerMeta(save: SaveGame, history: CareerHistoryItem[], reputation: number) {
+    save.lastSeasonSummary = {
+      ...(save.lastSeasonSummary ?? {}),
+      careerHistory: history,
+      careerReputation: reputation,
+    } as SaveGame['lastSeasonSummary'];
+  }
+
   async getOverview(saveGameId: string) {
     const save = await this.ensureSave(saveGameId);
+    const storedReputation = save.lastSeasonSummary?.careerReputation;
+    const liveReputation = Math.min(99, 50 + Math.round((Number(save.club?.budget ?? 0) || 0) / 10_000_000));
+    const reputation = save.club ? liveReputation : (storedReputation ?? 50);
 
     return {
       saveId: save.id,
@@ -38,27 +95,14 @@ export class CareerService {
       currentSeasonYear: save.currentSeasonYear,
       currentDate: save.currentDate,
       currentClub: save.club,
-      reputation: Math.min(99, 50 + Math.round((Number(save.club?.budget ?? 0) || 0) / 10_000_000)),
+      reputation,
       status: save.clubId ? 'em-atividade' : 'sem-clube',
     };
   }
 
   async getHistory(saveGameId: string) {
     const save = await this.ensureSave(saveGameId);
-
-    const history = save.club
-      ? [
-          {
-            clubId: save.club.id,
-            clubName: save.club.name,
-            countryName: save.club.league?.country?.name ?? null,
-            leagueName: save.club.league?.name ?? null,
-            fromDate: save.createdAt,
-            toDate: null,
-            role: 'Manager',
-          },
-        ]
-      : [];
+    const history = this.ensureSeedHistory(save, this.extractCareerHistory(save));
 
     return {
       saveId: save.id,
@@ -91,6 +135,33 @@ export class CareerService {
       throw new BadRequestException('Você já está neste clube');
     }
 
+    let history = this.ensureSeedHistory(save, this.extractCareerHistory(save));
+    const today = this.dateOnly(new Date());
+    const currentOpenIndex = history.findIndex((item) => item.toDate === null);
+
+    if (currentOpenIndex >= 0) {
+      history[currentOpenIndex] = {
+        ...history[currentOpenIndex],
+        toDate: today,
+      };
+    }
+
+    history = [
+      ...history,
+      {
+        clubId: club.id,
+        clubName: club.name,
+        countryName: club.league?.country?.name ?? null,
+        leagueName: club.league?.name ?? null,
+        fromDate: today,
+        toDate: null,
+        role: 'Manager',
+      },
+    ];
+
+    const updatedReputation = Math.min(99, 50 + Math.round((Number(club.budget) || 0) / 10_000_000));
+    this.persistCareerMeta(save, history, updatedReputation);
+
     save.clubId = club.id;
     save.club = club;
     await this.saveGameRepository.save(save);
@@ -108,6 +179,20 @@ export class CareerService {
     if (!save.clubId) {
       throw new BadRequestException('Você já está sem clube');
     }
+
+    const history = this.ensureSeedHistory(save, this.extractCareerHistory(save));
+    const today = this.dateOnly(new Date());
+    const currentOpenIndex = history.findIndex((item) => item.toDate === null);
+
+    if (currentOpenIndex >= 0) {
+      history[currentOpenIndex] = {
+        ...history[currentOpenIndex],
+        toDate: today,
+      };
+    }
+
+    const currentReputation = save.lastSeasonSummary?.careerReputation ?? Math.min(99, 50 + Math.round((Number(save.club?.budget ?? 0) || 0) / 10_000_000));
+    this.persistCareerMeta(save, history, currentReputation);
 
     save.clubId = null;
     save.club = null;

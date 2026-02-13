@@ -704,42 +704,41 @@ export class TransferService {
 
   async listAiJobOffers(query: QueryAiFeedDto) {
     const save = await this.ensureSaveExists(query.saveGameId);
-    if (!save.clubId) {
-      return {
-        data: [],
-        meta: { page: query.page, limit: query.limit, total: 0, totalPages: 0 },
-      };
-    }
+    const managedClub = save.clubId
+      ? await this.clubRepository.findOne({
+          where: { id: save.clubId },
+          relations: ['league', 'league.country'],
+        })
+      : null;
 
-    const managedClub = await this.clubRepository.findOne({
-      where: { id: save.clubId },
-      relations: ['league', 'league.country'],
-    });
-
-    if (!managedClub) {
-      return {
-        data: [],
-        meta: { page: query.page, limit: query.limit, total: 0, totalPages: 0 },
-      };
-    }
+    const managerReputation = managedClub
+      ? Math.min(99, 50 + Math.round((Number(managedClub.budget) || 0) / 10_000_000))
+      : (save.lastSeasonSummary?.careerReputation ?? 50);
 
     const allClubs = await this.clubRepository.find({
       relations: ['league', 'league.country'],
       order: { budget: 'DESC', name: 'ASC' },
     });
 
-    const managedSquad = await this.playerRepository.find({ where: { clubId: managedClub.id } });
+    const managedSquad = managedClub
+      ? await this.playerRepository.find({ where: { clubId: managedClub.id } })
+      : [];
     const managedAverage =
       managedSquad.reduce((sum, player) => sum + player.overall, 0) / Math.max(1, managedSquad.length);
 
-    const candidates = allClubs
-      .filter((club) => club.id !== managedClub.id)
+    const rankedCandidates = allClubs
+      .filter((club) => club.id !== managedClub?.id)
       .map((club) => {
-        const budgetGap = Number(club.budget) - Number(managedClub.budget);
+        const budgetGap = managedClub ? Number(club.budget) - Number(managedClub.budget) : 0;
         const projectScore = Math.max(0, Math.round(Number(club.budget) / 1_000_000 + (budgetGap > 0 ? 8 : 2)));
+        const reputationDistance = Math.abs(projectScore - managerReputation);
         const offerSalary = Math.max(60_000, Math.round(Number(club.budget) * 0.008));
         const rationale =
-          budgetGap > 0
+          !managedClub
+            ? reputationDistance <= 12
+              ? 'Oferta alinhada ao seu momento de carreira atual.'
+              : 'Projeto desafiador em relação à sua reputação atual.'
+            : budgetGap > 0
             ? 'Projeto com maior investimento e ambição de títulos.'
             : managedAverage >= 74
               ? 'Busca por técnico com bom desempenho esportivo recente.'
@@ -748,11 +747,15 @@ export class TransferService {
         return {
           club,
           projectScore,
+          reputationDistance,
           offerSalary,
           rationale,
         };
       })
-      .sort((a, b) => b.projectScore - a.projectScore);
+      .sort((a, b) => a.reputationDistance - b.reputationDistance || b.projectScore - a.projectScore);
+
+    const relevantCandidates = rankedCandidates.filter((item) => item.reputationDistance <= 18);
+    const candidates = relevantCandidates.length > 0 ? relevantCandidates : rankedCandidates.slice(0, 10);
 
     const start = (query.page - 1) * query.limit;
     const data = candidates.slice(start, start + query.limit);

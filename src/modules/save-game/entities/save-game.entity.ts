@@ -67,6 +67,16 @@ export class SaveGame {
       relegated: string[];
       note: string;
     };
+    careerHistory?: Array<{
+      clubId: string;
+      clubName: string;
+      countryName: string | null;
+      leagueName: string | null;
+      fromDate: string;
+      toDate: string | null;
+      role: string;
+    }>;
+    careerReputation?: number;
   } | null;
 
   @CreateDateColumn({ name: 'created_at' })
