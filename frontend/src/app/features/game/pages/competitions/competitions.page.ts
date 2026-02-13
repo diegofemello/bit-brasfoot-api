@@ -84,6 +84,24 @@ interface SimulatedRoundResponse {
   matchesSimulated: number;
 }
 
+interface AdvanceDayResponse {
+  saveId: string;
+  currentDate: string;
+  seasonYear: number;
+}
+
+interface AdvanceToNextMatchResponse {
+  saveId: string;
+  currentDate: string;
+  nextFixture: {
+    fixtureId: string;
+    seasonId: string;
+    matchDate: string;
+    round: number;
+  } | null;
+  message?: string;
+}
+
 @Component({
   selector: 'app-competitions-page',
   imports: [CommonModule, RouterLink],
@@ -107,12 +125,34 @@ interface SimulatedRoundResponse {
             <div class="flex items-center gap-2">
               <button
                 type="button"
+                (click)="advanceToNextMatch()"
+                [disabled]="advancingDay()"
+                class="rounded bg-sky-500 px-3 py-1 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Até próximo jogo
+              </button>
+              <button
+                type="button"
+                (click)="advanceDay()"
+                [disabled]="advancingDay()"
+                class="rounded bg-slate-600 px-3 py-1 text-sm font-semibold text-slate-100 hover:bg-slate-500 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Avançar dia
+              </button>
+              <button
+                type="button"
                 (click)="advanceSeason()"
                 [disabled]="advancingSeason()"
                 class="rounded bg-indigo-500 px-3 py-1 text-sm font-semibold text-slate-100 hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Avançar temporada
               </button>
+              <a
+                routerLink="/season-summary"
+                class="rounded bg-violet-500 px-3 py-1 text-sm font-semibold text-slate-100 hover:bg-violet-400"
+              >
+                Ver resumo
+              </a>
               <button
                 type="button"
                 (click)="setupCompetitions()"
@@ -316,6 +356,7 @@ export class CompetitionsPage {
   readonly simulatingRound = signal(false);
   readonly settingUpCompetitions = signal(false);
   readonly advancingSeason = signal(false);
+  readonly advancingDay = signal(false);
 
   readonly feedback = signal<string | null>(null);
   readonly feedbackError = signal(false);
@@ -420,6 +461,51 @@ export class CompetitionsPage {
         this.advancingSeason.set(false);
       },
     });
+  }
+
+  advanceDay() {
+    const saveGameId = this.gameState.selectedSaveGameId();
+    if (!saveGameId) return;
+
+    this.advancingDay.set(true);
+    this.apiService.post<AdvanceDayResponse>(`seasons/save/${saveGameId}/advance-day`, {}).subscribe({
+      next: (response) => {
+        this.setFeedback(`Data avançada para ${response.currentDate}.`, false);
+        this.loadCompetitions(this.selectedSeasonId() ?? undefined);
+        this.advancingDay.set(false);
+      },
+      error: (err) => {
+        this.setFeedback(this.extractErrorMessage(err, 'Falha ao avançar dia.'), true);
+        this.advancingDay.set(false);
+      },
+    });
+  }
+
+  advanceToNextMatch() {
+    const saveGameId = this.gameState.selectedSaveGameId();
+    if (!saveGameId) return;
+
+    this.advancingDay.set(true);
+    this.apiService
+      .post<AdvanceToNextMatchResponse>(`seasons/save/${saveGameId}/advance-to-next-match`, {})
+      .subscribe({
+        next: (response) => {
+          if (response.nextFixture) {
+            this.setFeedback(
+              `Data avançada para ${response.currentDate} (Rodada ${response.nextFixture.round}).`,
+              false,
+            );
+          } else {
+            this.setFeedback(response.message ?? 'Não há próximo jogo agendado.', false);
+          }
+          this.loadCompetitions(response.nextFixture?.seasonId ?? this.selectedSeasonId() ?? undefined);
+          this.advancingDay.set(false);
+        },
+        error: (err) => {
+          this.setFeedback(this.extractErrorMessage(err, 'Falha ao avançar até o próximo jogo.'), true);
+          this.advancingDay.set(false);
+        },
+      });
   }
 
   selectSeason(seasonId: string) {

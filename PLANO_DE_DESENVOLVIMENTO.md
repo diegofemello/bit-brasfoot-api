@@ -1656,12 +1656,12 @@ Para cada clube (fim de temporada):
 
 **Backend:**
 
-- [ ] Implementar PlayerEvolutionService (evolução por idade/tempo)
-- [ ] Implementar PlayerAgingService (declínio)
-- [ ] Implementar RetirementService (aposentadoria)
-- [ ] Implementar PromotionRelegationService
-- [ ] Implementar YouthAcademy (geração de jogadores, promoção)
-- [ ] Processamento de fim de temporada completo:
+- [x] Implementar PlayerEvolutionService (evolução por idade/tempo)
+- [x] Implementar PlayerAgingService (declínio)
+- [x] Implementar RetirementService (aposentadoria)
+- [x] Implementar PromotionRelegationService
+- [x] Implementar YouthAcademy (geração de jogadores, promoção)
+- [x] Processamento de fim de temporada completo (MVP):
   - Promoção/rebaixamento
   - Evolução de jogadores
   - Aposentadorias
@@ -1669,18 +1669,18 @@ Para cada clube (fim de temporada):
   - Geração de novos jovens da base
   - Atualização de valores de mercado
   - Reset de stats sazonais
-- [ ] Inicialização de nova temporada
-- [ ] Avanço de dia / avanço até próximo jogo
+- [x] Inicialização de nova temporada
+- [x] Avanço de dia / avanço até próximo jogo
 
 **Frontend:**
 
-- [ ] Tela de categorias de base (lista, promover, dispensar)
-- [ ] Tela de resumo de fim de temporada
+- [x] Tela de categorias de base (lista, promover, dispensar)
+- [x] Tela de resumo de fim de temporada
 - [ ] Animação de promoção/rebaixamento
-- [ ] Lista de aposentadorias
-- [ ] Lista de novos jogadores revelados
-- [ ] Renovação de contratos
-- [ ] Botão de avançar dia / avançar até jogo
+- [x] Lista de aposentadorias
+- [x] Lista de novos jogadores revelados
+- [x] Renovação de contratos
+- [x] Botão de avançar dia / avançar até jogo
 - [ ] Tela de início de nova temporada
 
 **Entregável:** Ciclo completo de temporada com evolução e base

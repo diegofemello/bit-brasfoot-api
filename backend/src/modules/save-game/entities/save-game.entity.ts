@@ -48,6 +48,26 @@ export class SaveGame {
   @Column({ name: 'is_active', default: true })
   isActive!: boolean;
 
+  @Column({ name: 'last_season_summary', type: 'jsonb', nullable: true })
+  lastSeasonSummary!: {
+    seasonYear: number;
+    playersProcessed: number;
+    retirees: number;
+    retireeNames: string[];
+    youthGenerated: number;
+    youthRevealed: Array<{
+      name: string;
+      position: string;
+      overall: number;
+      potential: number;
+    }>;
+    promotionRelegation: {
+      promoted: string[];
+      relegated: string[];
+      note: string;
+    };
+  } | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

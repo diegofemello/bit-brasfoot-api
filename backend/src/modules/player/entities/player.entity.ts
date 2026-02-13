@@ -64,6 +64,9 @@ export class Player {
   @Column({ type: 'bigint', default: 5000 })
   salary!: number; // Salário mensal
 
+  @Column({ name: 'contract_years_remaining', type: 'int', default: 2 })
+  contractYearsRemaining!: number;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
