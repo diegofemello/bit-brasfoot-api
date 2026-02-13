@@ -1624,29 +1624,29 @@ Para cada clube (fim de temporada):
 
 **Backend:**
 
-- [ ] Implementar MatchEngine (SimulationService)
-- [ ] Implementar EventGenerator (gols, cartões, lesões, substituições)
-- [ ] Implementar CommentaryService (narração em texto)
-- [ ] Implementar RatingService (notas dos jogadores)
-- [ ] Calcular força dos times e probabilidades
-- [ ] Simulação minuto a minuto com estado
-- [ ] Suporte a substituições e mudança tática durante partida
-- [ ] Simular todas as partidas da rodada (jogador + IA)
-- [ ] Atualizar standings, stats dos jogadores
-- [ ] Atualizar finanças (bilheteria)
-- [ ] Implementar módulo Match completo com eventos persistidos
+- [x] Implementar MatchEngine (SimulationService)
+- [x] Implementar EventGenerator (gols, cartões, lesões, substituições)
+- [x] Implementar CommentaryService (narração em texto)
+- [x] Implementar RatingService (notas dos jogadores)
+- [x] Calcular força dos times e probabilidades
+- [x] Simulação minuto a minuto com estado
+- [x] Suporte a substituições e mudança tática durante partida
+- [x] Simular todas as partidas da rodada (jogador + IA)
+- [x] Atualizar standings, stats dos jogadores
+- [x] Atualizar finanças (bilheteria)
+- [x] Implementar módulo Match completo com eventos persistidos
 
 **Frontend:**
 
-- [ ] Tela de pré-jogo (escalação, tática, previsão)
-- [ ] Tela de partida ao vivo — Modo Texto (narração com scroll automático)
-- [ ] Tela de partida ao vivo — Animação 2D (canvas/SVG campo + bola)
-- [ ] Placar em tempo real
-- [ ] Painel de substituições
-- [ ] Botão de troca de tática ao vivo
-- [ ] Timeline de eventos
-- [ ] Tela de pós-jogo (resultado, estatísticas, notas, destaques)
-- [ ] Transição animada entre minutos
+- [x] Tela de pré-jogo (escalação, tática, previsão)
+- [x] Tela de partida ao vivo — Modo Texto (narração com scroll automático)
+- [x] Tela de partida ao vivo — Animação 2D (canvas/SVG campo + bola)
+- [x] Placar em tempo real
+- [x] Painel de substituições
+- [x] Botão de troca de tática ao vivo
+- [x] Timeline de eventos
+- [x] Tela de pós-jogo (resultado, estatísticas, notas, destaques)
+- [x] Transição animada entre minutos
 
 **Entregável:** Simulação de partidas completa com interação ao vivo
 

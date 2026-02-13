@@ -5,6 +5,7 @@ import { ContractsPage } from './features/game/pages/contracts/contracts.page';
 import { FinancesPage } from './features/game/pages/finances/finances.page';
 import { InfrastructurePage } from './features/game/pages/infrastructure/infrastructure.page';
 import { MatchDayPage } from './features/game/pages/match-day/match-day.page';
+import { PreMatchPage } from './features/game/pages/pre-match/pre-match.page';
 import { PlayerDetailPage } from './features/game/pages/player-detail/player-detail.page';
 import { SeasonSummaryPage } from './features/game/pages/season-summary/season-summary.page';
 import { SeasonKickoffPage } from './features/game/pages/season-kickoff/season-kickoff.page';
@@ -86,6 +87,10 @@ export const routes: Routes = [
   {
     path: 'season-kickoff',
     component: SeasonKickoffPage,
+  },
+  {
+    path: 'pre-match/:fixtureId',
+    component: PreMatchPage,
   },
   {
     path: 'match-day/:fixtureId',

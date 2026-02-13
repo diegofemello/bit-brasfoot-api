@@ -302,6 +302,11 @@ interface AdvanceToNextMatchResponse {
                   <div class="text-xs text-slate-400">{{ fixture.matchDate }}</div>
                   <div class="font-semibold">{{ fixture.homeClub.name }} x {{ fixture.awayClub.name }}</div>
                   <div class="flex items-center gap-3">
+                    @if (fixture.status === 'scheduled') {
+                      <a [routerLink]="['/pre-match', fixture.id]" class="text-xs text-sky-300 hover:text-sky-200">
+                        Pré-jogo
+                      </a>
+                    }
                     <a [routerLink]="['/match-day', fixture.id]" class="text-xs text-emerald-300 hover:text-emerald-200">
                       Dia de jogo
                     </a>

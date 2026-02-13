@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CompetitionService } from '../competition/competition.service';
-import { MatchEvent } from './entities/match-event.entity';
+import { MatchEvent, MatchEventType } from './entities/match-event.entity';
 import { MatchPlayerRating } from './entities/match-player-rating.entity';
 import { MatchTimeline } from './entities/match-timeline.entity';
 import { Match } from './entities/match.entity';
@@ -82,5 +82,46 @@ export class MatchService {
       matchId: match.id,
       timeline,
     };
+  }
+
+  async appendCoachActionEvent(params: {
+    fixtureId: string;
+    minute: number;
+    team: 'home' | 'away';
+    type: 'substitution' | 'tactic';
+    description: string;
+  }) {
+    const match = await this.matchRepository.findOne({ where: { fixtureId: params.fixtureId } });
+
+    if (!match) {
+      throw new NotFoundException('Partida não encontrada para registrar ação do técnico');
+    }
+
+    const eventType =
+      params.type === 'substitution' ? MatchEventType.SUBSTITUTION : MatchEventType.TACTIC_CHANGE;
+
+    const event = this.eventRepository.create({
+      matchId: match.id,
+      minute: params.minute,
+      type: eventType,
+      clubId: params.team === 'home' ? match.homeClubId : match.awayClubId,
+      playerId: null,
+      description: params.description,
+    });
+
+    await this.eventRepository.save(event);
+  }
+
+  async clearCoachActionEvents(fixtureId: string) {
+    const match = await this.matchRepository.findOne({ where: { fixtureId } });
+
+    if (!match) {
+      throw new NotFoundException('Partida não encontrada para limpar ações do técnico');
+    }
+
+    await this.eventRepository.delete({
+      matchId: match.id,
+      type: In([MatchEventType.SUBSTITUTION, MatchEventType.TACTIC_CHANGE]),
+    });
   }
 }
